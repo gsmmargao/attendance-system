@@ -29,6 +29,46 @@
     .mobile-only { display: none !important; }
     #appContainer { max-width: 90rem !important; height: 94vh !important; border-radius: 1rem !important; }
   }
+
+    /* ===== iOS/Android Safe Area + Tap Targets ===== */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      @media (max-width: 1023px) {
+        #appContainer {
+          padding-top: env(safe-area-inset-top) !important;
+          padding-bottom: env(safe-area-inset-bottom) !important;
+          padding-left: env(safe-area-inset-left) !important;
+          padding-right: env(safe-area-inset-right) !important;
+          box-sizing: border-box !important;
+        }
+        header.mobile-only {
+          min-height: 60px;
+        }
+        header.mobile-only button {
+          min-width: 44px;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          touch-action: manipulation;
+        }
+        footer.mobile-only button {
+          min-height: 48px;
+          touch-action: manipulation;
+        }
+      }
+    }
+    /* Full-screen pages (index, signup) */
+    @supports (padding-top: env(safe-area-inset-top)) {
+      @media (max-width: 1023px) {
+        body {
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+          box-sizing: border-box;
+        }
+      }
+    }
 </style>
 </head>
 <body class="bg-gray-900 flex justify-center items-center min-h-[100dvh] p-0 lg:p-6 select-none">
