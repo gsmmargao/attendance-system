@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Admin Dashboard</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:,">
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  @media (max-width: 1023px) {
+    .desktop-only { display: none !important; }
+    .mobile-only { display: flex !important; }
+    #appContainer { max-width: 28rem !important; height: 100dvh !important; border-radius: 0 !important; border: none !important; }
+  }
+  @media (min-width: 1024px) {
+    .desktop-only { display: flex !important; }
+    .mobile-only { display: none !important; }
+    #appContainer { max-width: 80rem !important; height: 96vh !important; border-radius: 1rem !important; }
+  }
+</style>
+</head>
+<body class="bg-gray-200 flex justify-center items-center min-h-[100dvh] p-0 lg:p-4 overflow-hidden select-none">
+
+<div id="appContainer" class="w-full bg-white shadow-2xl flex flex-col lg:flex-row overflow-hidden relative mx-auto">
+
+  <!-- LOGIN -->
+  <div id="loginView" class="p-8 flex flex-col justify-center items-center h-full bg-white z-50 absolute inset-0">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <i class="fas fa-fingerprint text-6xl text-blue-600 mb-3"></i>
+        <h1 class="text-3xl font-bold text-gray-800">Admin Login</h1>
+        <p class="text-gray-500 text-sm mt-1">Manage your workforce attendance</p>
+      </div>
+      <form onsubmit="event.preventDefault(); adminLogin();" class="flex flex-col">
+        <input type="text" id="adminEmail" placeholder="Admin ID" class="p-4 border rounded-lg mb-4 bg-gray-50 outline-none focus:border-blue-500" required>
+        <input type="password" id="adminPassword" placeholder="Password" class="p-4 border rounded-lg mb-6 bg-gray-50 outline-none focus:border-blue-500" required>
+        <button type="submit" id="btnLogin" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-bold shadow-lg active:scale-95 transition">Login</button>
+      </form>
+      <p id="loginError" class="text-red-500 text-xs text-center mt-3 hidden"></p>
+      <div class="mt-8 border-t border-gray-100 pt-6">
+        <p class="text-center text-xs text-gray-400 font-semibold mb-3 uppercase tracking-wider">Switch Portal</p>
+        <a href="/user.html" class="w-full bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 p-3.5 rounded-lg font-bold active:scale-95 transition flex justify-center items-center gap-2">
+          <i class="fas fa-user-check"></i> Employee Self-Punch Login
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside id="desktopSidebar" class="desktop-only flex-col w-64 bg-slate-900 text-slate-300 flex-shrink-0 z-30 justify-between">
+    <div>
+      <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg"><i class="fas fa-id-badge"></i></div>
+        <div class="overflow-hidden">
+          <h2 id="desktopBrandTitle" class="text-sm font-bold text-white truncate">Admin Portal</h2>
+          <p class="text-[10px] text-green-400 flex items-center gap-1 mt-0.5"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online</p>
+        </div>
+      </div>
+      <nav class="p-3 space-y-1">
+        <button onclick="switchTab('dashboard')" id="desknav-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-blue-600 text-white"><i class="fas fa-th-large w-5 text-center"></i> Dashboard</button>
+        <button onclick="switchTab('punch')" id="desknav-punch" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800"><i class="fas fa-camera w-5 text-center"></i> AI Kiosk</button>
+        <button onclick="switchTab('reports')" id="desknav-reports" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800"><i class="fas fa-chart-line w-5 text-center"></i> Reports</button>
+        <button onclick="switchTab('settings')" id="desknav-settings" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800"><i class="fas fa-cog w-5 text-center"></i> Settings</button>
+      </nav>
+    </div>
+    <div class="p-4 border-t border-slate-800">
+      <div class="flex items-center justify-between">
+        <span id="desktopAdminUser" class="text-xs font-semibold truncate">Admin</span>
+        <button onclick="logout()" class="text-slate-400 hover:text-red-400 p-2"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div id="mainAppView" class="hidden flex-1 flex-col h-full overflow-hidden w-full relative">
+
+    <!-- MOBILE HEADER -->
+    <header class="mobile-only bg-blue-600 p-4 text-white justify-between items-center shadow-md z-20 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-shield-alt text-lg opacity-80"></i>
+        <div>
+          <h1 id="headerTitle" class="text-base font-bold truncate max-w-[200px]">Loading...</h1>
+          <p id="trialBadgeMobile" class="hidden text-[10px] font-bold"></p>
+        </div>
+      </div>
+      <button onclick="logout()"><i class="fas fa-sign-out-alt text-lg"></i></button>
+    </header>
+
+    <!-- DESKTOP HEADER -->
+    <header class="desktop-only bg-white border-b border-gray-200 px-6 py-3.5 justify-between items-center z-20 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <span id="desktopBreadcrumb" class="text-sm font-bold text-gray-800">Dashboard</span>
+        <span id="trialBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full ml-2"></span>
+        <span class="text-gray-300">|</span>
+        <span id="desktopDateIndicator" class="text-xs font-semibold text-gray-500">--</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="openBulkModal()" class="text-xs font-semibold text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg border"><i class="fas fa-tasks text-blue-600"></i> Bulk Ops</button>
+        <button onclick="openAddEmployeeModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fas fa-user-plus"></i> Add Employee</button>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-3 lg:p-6">
+
+      <!-- TAB 1: DASHBOARD -->
+      <div id="tab-dashboard" class="flex flex-col min-h-full">
+        <div class="grid grid-cols-5 gap-2 lg:gap-4 mb-3 lg:mb-4 text-center">
+          <button onclick="filterList('all')" id="btnFilter-all" class="filter-btn ring-2 ring-blue-400 bg-gray-100 border rounded-xl py-2 lg:py-3"><p id="countAll" class="text-base lg:text-2xl font-black text-blue-600">0</p><p class="text-[9px] lg:text-xs text-gray-500 font-bold uppercase">All</p></button>
+          <button onclick="filterList('in')" id="btnFilter-in" class="filter-btn border rounded-xl py-2 lg:py-3 bg-white"><p id="countIn" class="text-base lg:text-2xl font-black text-green-500">0</p><p class="text-[9px] lg:text-xs text-gray-500 font-bold uppercase">In</p></button>
+          <button onclick="filterList('out')" id="btnFilter-out" class="filter-btn border rounded-xl py-2 lg:py-3 bg-white"><p id="countOut" class="text-base lg:text-2xl font-black text-orange-500">0</p><p class="text-[9px] lg:text-xs text-gray-500 font-bold uppercase">Out</p></button>
+          <button onclick="filterList('late')" id="btnFilter-late" class="filter-btn border rounded-xl py-2 lg:py-3 bg-white"><p id="countLate" class="text-base lg:text-2xl font-black text-red-500">0</p><p class="text-[9px] lg:text-xs text-gray-500 font-bold uppercase">Late</p></button>
+          <button onclick="filterList('missing')" id="btnFilter-missing" class="filter-btn border rounded-xl py-2 lg:py-3 bg-white"><p id="countMissing" class="text-base lg:text-2xl font-black text-gray-500">0</p><p class="text-[9px] lg:text-xs text-gray-500 font-bold uppercase">Absent</p></button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-4">
+          <div class="w-full lg:flex-1 flex flex-col">
+            <div class="flex gap-2 mb-3">
+              <input type="text" id="searchInput" onkeyup="searchEmployees()" placeholder="Search name, code, dept..." class="flex-1 pl-3 pr-3 py-2 border rounded-xl bg-white outline-none focus:border-blue-500 text-xs lg:text-sm">
+              <input type="date" id="dashboardDatePicker" onchange="changeDashboardDate()" class="p-1.5 border rounded-lg text-xs bg-white">
+            </div>
+            <div id="employeeList" class="flex flex-col gap-3 pb-6"></div>
+            <div class="lg:hidden flex justify-center pb-4">
+              <button onclick="openAddEmployeeModal()" class="bg-blue-600 text-white px-6 py-2.5 rounded-full font-bold text-xs"><i class="fas fa-user-plus"></i> Add Employee</button>
+            </div>
+          </div>
+          <div class="w-full lg:w-96 flex flex-col gap-4">
+            <div class="desktop-only flex-col bg-white p-4 rounded-xl border shadow-sm">
+              <h3 class="text-xs font-bold text-gray-700 uppercase mb-3"><i class="fas fa-chart-pie text-blue-500"></i> Attendance</h3>
+              <div class="h-44 w-full relative"><canvas id="todayRatioChartDesktop"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: AI KIOSK -->
+      <div id="tab-punch" class="hidden flex-col bg-gray-50 min-h-full max-w-2xl mx-auto">
+        <div class="h-72 lg:h-80 bg-black relative flex items-center justify-center overflow-hidden rounded-2xl mb-4">
+          <video id="adminVideo" autoplay muted playsinline class="object-cover w-full h-full transform scale-x-[-1]"></video>
+          <div class="absolute inset-0 border-2 border-dashed border-white opacity-40 m-8 lg:m-12 rounded-full pointer-events-none flex items-center justify-center"><div class="w-full h-full bg-black bg-opacity-20 rounded-full"></div></div>
+          <div class="absolute bottom-4 left-0 right-0 flex justify-center"><p id="adminStatusText" class="text-white bg-black bg-opacity-70 px-5 py-2 rounded-full font-semibold text-xs"><i class="fas fa-spinner fa-spin mr-2"></i>Initializing...</p></div>
+        </div>
+        <p class="text-center text-xs text-gray-500 mb-4">Position face in oval. Kiosk bypasses geofence.</p>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <button onclick="adminKioskPunch('in')" class="bg-green-500 text-white py-4 rounded-2xl font-bold active:scale-95 transition"><i class="fas fa-sign-in-alt text-2xl"></i><div>PUNCH IN</div></button>
+          <button onclick="adminKioskPunch('out')" class="bg-orange-500 text-white py-4 rounded-2xl font-bold active:scale-95 transition"><i class="fas fa-sign-out-alt text-2xl"></i><div>PUNCH OUT</div></button>
+        </div>
+        <div class="bg-white p-4 rounded-xl border flex justify-between items-center mb-4">
+          <div><span class="font-bold text-sm"><i class="fas fa-id-card-alt text-blue-500"></i> Face Registry</span><br><span class="text-xs text-gray-400">Trained models</span></div>
+          <span id="faceRegisteredCount" class="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-xs">0/0</span>
+        </div>
+        <div class="flex items-center text-xs text-gray-400 uppercase font-bold mb-3"><div class="flex-1 border-t"></div><span class="px-3">Fallback: Selfie</span><div class="flex-1 border-t"></div></div>
+        <div class="bg-white p-4 rounded-xl border flex flex-col gap-3">
+          <select id="fallbackEmpSelect" class="p-3 border rounded-lg text-sm bg-gray-50"><option value="">-- Select Employee --</option></select>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="fallbackSelfiePunch('in')" class="bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm"><i class="fas fa-camera"></i> Selfie IN</button>
+            <button onclick="fallbackSelfiePunch('out')" class="bg-pink-600 text-white py-3 rounded-xl font-bold text-sm"><i class="fas fa-camera"></i> Selfie OUT</button>
+          </div>
+          <canvas id="fallbackCanvas" class="hidden"></canvas>
+        </div>
+      </div>
+
+      <!-- TAB 3: REPORTS -->
+      <div id="tab-reports" class="hidden flex-col bg-white rounded-xl border min-h-full overflow-hidden">
+        <div class="flex border-b bg-gray-50 text-xs font-bold text-gray-600">
+          <button onclick="switchReportSubTab('daily')" id="subtab-btn-daily" class="flex-1 py-3 border-b-2 border-blue-600 text-blue-600 bg-white"><i class="far fa-calendar-check"></i> Daily</button>
+          <button onclick="switchReportSubTab('monthly')" id="subtab-btn-monthly" class="flex-1 py-3 text-gray-500"><i class="far fa-calendar-alt"></i> Monthly</button>
+        </div>
+
+        <div id="report-view-daily" class="p-3 lg:p-6 flex flex-col flex-1">
+          <div class="flex flex-wrap gap-2 items-center mb-3">
+            <input type="date" id="dailyReportDate" onchange="generateDailyReport()" class="p-2 border rounded-lg text-xs bg-gray-50">
+            <button onclick="generateDailyReport()" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fas fa-redo"></i></button>
+            <button onclick="exportCSV()" class="bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fas fa-file-csv"></i> CSV</button>
+          </div>
+          <div class="grid grid-cols-3 lg:grid-cols-6 gap-2 mb-3 text-center">
+            <div class="bg-blue-50 p-2 rounded-xl"><p id="dailyKpiEmp" class="text-lg font-bold text-blue-700">0</p><p class="text-[9px] text-gray-500 uppercase">Total</p></div>
+            <div class="bg-green-50 p-2 rounded-xl"><p id="dailyKpiPresent" class="text-lg font-bold text-green-700">0</p><p class="text-[9px] text-gray-500 uppercase">Present</p></div>
+            <div class="bg-red-50 p-2 rounded-xl"><p id="dailyKpiAbsent" class="text-lg font-bold text-red-600">0</p><p class="text-[9px] text-gray-500 uppercase">Absent</p></div>
+            <div class="bg-orange-50 p-2 rounded-xl"><p id="dailyKpiLate" class="text-lg font-bold text-orange-600">0</p><p class="text-[9px] text-gray-500 uppercase">Late</p></div>
+            <div class="bg-indigo-50 p-2 rounded-xl"><p id="dailyKpiHours" class="text-lg font-bold text-indigo-700">0h</p><p class="text-[9px] text-gray-500 uppercase">Hours</p></div>
+            <div class="bg-purple-50 p-2 rounded-xl"><p id="dailyKpiOtHours" class="text-lg font-bold text-purple-700">0h</p><p class="text-[9px] text-gray-500 uppercase">OT</p></div>
+          </div>
+          <div class="overflow-x-auto border rounded-xl flex-1 bg-white">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-gray-100 border-b"><tr>
+                <th class="p-2.5">Employee</th><th class="p-2.5">Dept</th><th class="p-2.5">Status</th>
+                <th class="p-2.5">Shift 1</th><th class="p-2.5">Shift 2</th>
+                <th class="p-2.5 text-right">Hrs/OT</th><th class="p-2.5 text-right">₹</th><th class="p-2.5 text-center">Photo</th>
+              </tr></thead>
+              <tbody id="dailyReportTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="report-view-monthly" class="hidden p-3 lg:p-6 flex flex-col flex-1">
+          <div class="flex flex-wrap gap-2 items-center mb-3">
+            <input type="month" id="monthlyReportPicker" onchange="generateMonthlyReport()" class="p-2 border rounded-lg text-xs bg-gray-50">
+            <button onclick="generateMonthlyReport()" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fas fa-sync"></i></button>
+            <button onclick="exportMonthlyCSV()" class="bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-bold"><i class="fas fa-file-excel"></i> CSV</button>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center mb-3">
+            <div class="bg-blue-50 p-2 rounded-lg"><p id="monthlyKpiPresents" class="text-lg font-bold text-blue-700">0</p><p class="text-[9px] text-gray-500 uppercase">Present</p></div>
+            <div class="bg-purple-50 p-2 rounded-lg"><p id="monthlyKpiOtHours" class="text-lg font-bold text-purple-700">0h</p><p class="text-[9px] text-gray-500 uppercase">OT</p></div>
+            <div class="bg-emerald-50 p-2 rounded-lg"><p id="monthlyKpiPayroll" class="text-lg font-bold text-emerald-700">₹0</p><p class="text-[9px] text-gray-500 uppercase">Payroll</p></div>
+          </div>
+          <div class="overflow-x-auto border rounded-xl flex-1 bg-white">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-gray-100 border-b"><tr>
+                <th class="p-2.5">Employee</th><th class="p-2.5">Dept</th><th class="p-2.5">P/A/L</th>
+                <th class="p-2.5 text-right">Hours (OT)</th><th class="p-2.5 text-right">Base + OT</th><th class="p-2.5 text-right">Gross</th>
+              </tr></thead>
+              <tbody id="monthlyReportTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: SETTINGS -->
+      <div id="tab-settings" class="hidden flex-col bg-white rounded-xl border min-h-full max-w-2xl mx-auto overflow-hidden">
+        <div class="bg-gray-100 p-3 px-5 text-xs font-bold text-gray-600 uppercase">Management</div>
+        <div class="flex flex-col divide-y divide-gray-100">
+          <button onclick="openSettingsModal('location')" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="fas fa-map-marker-alt text-blue-500 w-5"></i> Location & Geofence</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+          <button onclick="openSettingsModal('calendar')" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="far fa-calendar-alt text-purple-500 w-5"></i> Weekly Offs</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+          <button onclick="openSettingsModal('salary')" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="fas fa-money-check-alt text-green-500 w-5"></i> Salary & OT</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+          <button onclick="openLeaveModal()" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="fas fa-plane-departure text-amber-500 w-5"></i> Leaves</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+          <button onclick="openHolidayModal()" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="fas fa-gift text-red-500 w-5"></i> Holidays</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+        </div>
+        <div class="bg-gray-100 p-3 px-5 text-xs font-bold text-gray-600 uppercase mt-4">Subscription</div>
+        <div class="flex flex-col divide-y divide-gray-100">
+          <button onclick="openSubscriptionModal()" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="fas fa-crown text-yellow-500 w-5"></i> View Plans & Upgrade</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+        </div>
+        <div class="bg-gray-100 p-3 px-5 text-xs font-bold text-gray-600 uppercase mt-4">Security</div>
+        <div class="flex flex-col divide-y divide-gray-100">
+          <button onclick="openPasswordModal()" class="flex items-center justify-between p-4 hover:bg-gray-50 text-sm"><div class="flex items-center gap-4"><i class="fas fa-lock text-gray-500 w-5"></i> Change Password</div><i class="fas fa-chevron-right text-gray-300"></i></button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- MOBILE NAV -->
+    <footer class="mobile-only bg-white border-t justify-around p-2 text-gray-500 text-[10px] z-20 flex-shrink-0">
+      <button onclick="switchTab('dashboard')" id="nav-dashboard" class="flex flex-col items-center text-blue-600 font-bold w-1/4"><i class="fas fa-th-large text-xl mb-1"></i> Home</button>
+      <button onclick="switchTab('punch')" id="nav-punch" class="flex flex-col items-center w-1/4"><i class="fas fa-camera text-xl mb-1"></i> Punch</button>
+      <button onclick="switchTab('reports')" id="nav-reports" class="flex flex-col items-center w-1/4"><i class="fas fa-file-alt text-xl mb-1"></i> Reports</button>
+      <button onclick="switchTab('settings')" id="nav-settings" class="flex flex-col items-center w-1/4"><i class="fas fa-cog text-xl mb-1"></i> Settings</button>
+    </footer>
+  </div>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- Add/Edit Employee -->
+  <div id="addEmployeeModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 id="formEmployeeTitle" class="font-bold text-gray-800 text-lg"><i class="fas fa-user-plus text-blue-500"></i> New Employee</h3>
+        <button onclick="toggleModal('addEmployeeModal')" class="text-gray-400"><i class="fas fa-times text-lg"></i></button>
+      </div>
+      <input type="hidden" id="editEmpId" value="">
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <input id="eName" placeholder="Full Name" class="p-2.5 border rounded-lg text-sm bg-gray-50">
+          <input id="eCode" placeholder="EMP Code" class="p-2.5 border rounded-lg text-sm bg-gray-50">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <input id="eLogin" placeholder="Login ID" class="p-2.5 border rounded-lg text-sm bg-gray-50">
+          <input id="ePass" placeholder="Password" class="p-2.5 border rounded-lg text-sm bg-gray-50">
+        </div>
+        <select id="eDept" class="w-full p-2.5 border rounded-lg text-sm bg-gray-50">
+          <option>General</option><option>Service</option><option>Engineer</option><option>CCO</option>
+          <option>Manager</option><option>Captain</option><option>Head Chef</option><option>Assistant Chef</option>
+          <option>Kitchen Supervisor</option><option>Kitchen Helper</option><option>Dish Washer</option><option>Waiter</option>
+        </select>
+        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+          <select id="eTimingType" onchange="handleTimingChange()" class="w-full p-2 border rounded text-sm mb-2">
+            <option value="Single">Single Shift</option><option value="Dual">Dual Shift</option>
+          </select>
+          <div id="timingSingle" class="grid grid-cols-2 gap-3">
+            <input type="time" id="eStart1" value="09:30" class="p-2 border rounded text-sm">
+            <input type="time" id="eEnd1" value="19:00" class="p-2 border rounded text-sm">
+          </div>
+          <div id="timingDual" class="hidden space-y-2">
+            <div class="grid grid-cols-2 gap-3"><input type="time" id="eDStart1" value="11:00" class="p-2 border rounded text-sm"><input type="time" id="eDEnd1" value="16:00" class="p-2 border rounded text-sm"></div>
+            <div class="grid grid-cols-2 gap-3"><input type="time" id="eDStart2" value="19:00" class="p-2 border rounded text-sm"><input type="time" id="eDEnd2" value="00:00" class="p-2 border rounded text-sm"></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <input type="number" id="eSalary" placeholder="Base Salary ₹" class="p-2.5 border rounded-lg text-sm bg-gray-50">
+          <input type="number" id="eRate" placeholder="OT Rate ₹/hr" class="p-2.5 border rounded-lg text-sm bg-gray-50">
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="toggleModal('addEmployeeModal')" class="w-1/3 bg-gray-200 py-3 rounded-lg font-bold text-sm">Cancel</button>
+        <button onclick="saveEmployee()" class="w-2/3 bg-blue-600 text-white py-3 rounded-lg font-bold text-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Correction Modal -->
+  <div id="correctionModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold mb-3"><i class="fas fa-edit text-blue-500"></i> Edit Attendance</h3>
+      <p id="correctEmpName" class="text-xs font-bold text-gray-600 mb-2">--</p>
+      <input type="hidden" id="correctEmpId"><input type="hidden" id="correctDate">
+      <div class="mb-3">
+        <select id="correctStatus" class="w-full p-2 border rounded text-xs bg-gray-50">
+          <option>Present</option><option>Late</option><option>Half-Day</option><option>Absent</option><option>Paid Leave</option>
+        </select>
+      </div>
+      <div class="mb-3 grid grid-cols-2 gap-2"><input type="time" id="correctS1In" class="p-2 border rounded text-xs"><input type="time" id="correctS1Out" class="p-2 border rounded text-xs"></div>
+      <div class="mb-3 grid grid-cols-2 gap-2"><input type="time" id="correctS2In" class="p-2 border rounded text-xs"><input type="time" id="correctS2Out" class="p-2 border rounded text-xs"></div>
+      <div class="flex gap-2">
+        <button onclick="toggleModal('correctionModal')" class="flex-1 bg-gray-200 py-2 rounded font-bold text-xs">Cancel</button>
+        <button onclick="saveCorrection()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-xs">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modals -->
+  <div id="locationModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+      <h3 class="font-bold text-lg mb-4"><i class="fas fa-map-marker-alt text-blue-500"></i> Geofence</h3>
+      <button onclick="scanLocation()" class="w-full bg-indigo-100 text-indigo-700 font-bold py-2 rounded-lg mb-3 text-sm"><i class="fas fa-crosshairs"></i> Scan Current Location</button>
+      <input id="locLat" placeholder="Latitude" class="w-full p-3 border rounded mb-2 text-sm bg-gray-50">
+      <input id="locLong" placeholder="Longitude" class="w-full p-3 border rounded mb-2 text-sm bg-gray-50">
+      <input id="locRadius" type="number" placeholder="Radius (m)" class="w-full p-3 border rounded mb-4 text-sm bg-gray-50">
+      <div class="flex gap-2">
+        <button onclick="toggleModal('locationModal')" class="flex-1 bg-gray-200 py-2 rounded font-bold text-sm">Close</button>
+        <button onclick="saveLocation()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="calendarModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+      <h3 class="font-bold text-lg mb-4"><i class="far fa-calendar-alt text-purple-500"></i> Weekly Offs</h3>
+      <div class="flex flex-col gap-2 mb-4 bg-gray-50 p-4 rounded">
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Monday" class="wo-cb w-4 h-4"> Monday</label>
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Tuesday" class="wo-cb w-4 h-4"> Tuesday</label>
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Wednesday" class="wo-cb w-4 h-4"> Wednesday</label>
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Thursday" class="wo-cb w-4 h-4"> Thursday</label>
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Friday" class="wo-cb w-4 h-4"> Friday</label>
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Saturday" class="wo-cb w-4 h-4"> Saturday</label>
+        <label class="flex items-center gap-3 text-sm"><input type="checkbox" value="Sunday" class="wo-cb w-4 h-4"> Sunday</label>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="toggleModal('calendarModal')" class="flex-1 bg-gray-200 py-2 rounded font-bold text-sm">Cancel</button>
+        <button onclick="saveCalendar()" class="flex-1 bg-purple-600 text-white py-2 rounded font-bold text-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="salaryModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+      <h3 class="font-bold text-lg mb-4"><i class="fas fa-money-bill-wave text-green-500"></i> Salary Config</h3>
+      <label class="text-xs text-gray-500 font-bold">Standard Hours (Daily)</label>
+      <input type="number" id="cfgStandardHours" class="w-full p-3 border rounded mb-3 text-sm bg-gray-50">
+      <label class="text-xs text-gray-500 font-bold">OT Multiplier</label>
+      <input type="number" step="0.1" id="cfgOtMultiplier" class="w-full p-3 border rounded mb-3 text-sm bg-gray-50">
+      <label class="text-xs text-gray-500 font-bold">Grace Period (min)</label>
+      <input type="number" id="cfgGrace" class="w-full p-3 border rounded mb-4 text-sm bg-gray-50">
+      <div class="flex gap-2">
+        <button onclick="toggleModal('salaryModal')" class="flex-1 bg-gray-200 py-2 rounded font-bold text-sm">Cancel</button>
+        <button onclick="saveSalaryConfig()" class="flex-1 bg-green-600 text-white py-2 rounded font-bold text-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+      <h3 class="font-bold mb-3"><i class="fas fa-plane-departure text-amber-500"></i> Record Leave</h3>
+      <select id="leaveEmpSelect" class="w-full p-2 border rounded text-sm mb-2 bg-gray-50"></select>
+      <input type="date" id="leaveDateInput" class="w-full p-2 border rounded text-sm mb-2 bg-gray-50">
+      <select id="leaveTypeSelect" class="w-full p-2 border rounded text-sm mb-2 bg-gray-50">
+        <option>Paid Leave</option><option>Casual Leave</option><option>Sick Leave</option><option>Unpaid Leave</option>
+      </select>
+      <input id="leaveReasonInput" placeholder="Reason" class="w-full p-2 border rounded text-sm mb-3 bg-gray-50">
+      <div class="flex gap-2">
+        <button onclick="toggleModal('leaveModal')" class="flex-1 bg-gray-200 py-2 rounded font-bold text-xs">Close</button>
+        <button onclick="submitLeave()" class="flex-1 bg-amber-500 text-white py-2 rounded font-bold text-xs">Save</button>
+      </div>
+      <div id="leaveHistory" class="mt-4 text-xs"></div>
+    </div>
+  </div>
+
+  <div id="holidayModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 w-full max-w-md max-h-[90vh] flex flex-col">
+      <h3 class="font-bold mb-3"><i class="fas fa-gift text-red-500"></i> Holidays</h3>
+      <div class="flex gap-2 mb-3">
+        <input type="date" id="newHolidayDate" class="flex-1 p-2 border rounded text-sm bg-gray-50">
+        <input id="newHolidayName" placeholder="Name" class="flex-1 p-2 border rounded text-sm bg-gray-50">
+        <button onclick="addHoliday()" class="bg-red-500 text-white px-4 py-2 rounded font-bold text-sm">Add</button>
+      </div>
+      <div id="holidayList" class="text-xs overflow-y-auto flex-1"></div>
+      <button onclick="toggleModal('holidayModal')" class="mt-3 bg-gray-200 py-2 rounded font-bold text-sm">Close</button>
+    </div>
+  </div>
+
+  <div id="passwordModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-6 w-full max-w-sm">
+      <h3 class="font-bold mb-4"><i class="fas fa-lock text-blue-500"></i> Change Password</h3>
+      <input type="password" id="newPass" placeholder="New Password" class="w-full p-3 border rounded mb-3 text-sm bg-gray-50">
+      <input type="password" id="confPass" placeholder="Confirm Password" class="w-full p-3 border rounded mb-4 text-sm bg-gray-50">
+      <div class="flex gap-2">
+        <button onclick="toggleModal('passwordModal')" class="flex-1 bg-gray-200 py-2 rounded font-bold text-sm">Cancel</button>
+        <button onclick="changePassword()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bulkModal" class="hidden absolute inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 w-full max-w-sm">
+      <h3 class="font-bold mb-3"><i class="fas fa-tasks text-blue-600"></i> Bulk Actions</h3>
+      <button onclick="bulkMarkAbsent()" class="w-full bg-red-50 text-red-700 font-bold p-3 rounded-lg text-xs mb-2"><i class="fas fa-user-times"></i> Mark Missing as Absent</button>
+      <button onclick="bulkApproveOt()" class="w-full bg-green-50 text-green-700 font-bold p-3 rounded-lg text-xs mb-3"><i class="fas fa-check-double"></i> Approve All OT</button>
+      <button onclick="toggleModal('bulkModal')" class="w-full bg-gray-200 py-2 rounded font-bold text-xs">Close</button>
+    </div>
+  </div>
+
+  <div id="photoModal" class="hidden absolute inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl p-5 w-full max-w-lg flex flex-col items-center">
+      <div class="flex justify-between w-full mb-2"><h3 class="font-bold"><i class="fas fa-image text-blue-500"></i> Punch Photos</h3><button onclick="toggleModal('photoModal')"><i class="fas fa-times"></i></button></div>
+      <p id="photoEmpName" class="text-xs text-gray-500 mb-3">--</p>
+      <div class="flex gap-3 w-full mb-3">
+        <div class="flex-1"><p class="text-xs font-bold mb-1">IN</p><img id="photoIn" class="w-full h-48 object-contain bg-gray-100 rounded hidden"><div id="photoInEmpty" class="w-full h-48 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs"><i class="fas fa-camera-slash"></i></div></div>
+        <div class="flex-1"><p class="text-xs font-bold mb-1">OUT</p><img id="photoOut" class="w-full h-48 object-contain bg-gray-100 rounded hidden"><div id="photoOutEmpty" class="w-full h-48 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs"><i class="fas fa-camera-slash"></i></div></div>
+      </div>
+      <button onclick="toggleModal('photoModal')" class="w-full bg-gray-200 py-2 rounded font-bold text-sm">Close</button>
+    </div>
+  </div>
+
+  <!-- Subscription Modal -->
+  <div id="subscriptionModal" class="hidden absolute inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-3xl max-h-[94vh] overflow-y-auto">
+      <div class="text-center mb-5">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl mx-auto mb-3"><i class="fas fa-crown"></i></div>
+        <h2 id="subModalTitle" class="text-xl font-bold text-gray-800">Choose Your Plan</h2>
+        <p id="subModalSubtitle" class="text-xs text-gray-500 mt-1">Continue with a plan below.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+        <div class="border-2 border-gray-200 rounded-2xl p-4">
+          <h3 class="font-bold text-sm mb-1">Monthly</h3>
+          <div class="text-2xl font-black mb-3">₹499<span class="text-xs text-gray-500">/mo</span></div>
+          <button onclick="buyPlan('monthly')" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-xs">Choose</button>
+        </div>
+        <div class="border-2 border-blue-500 rounded-2xl p-4 relative">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[9px] font-bold px-3 py-1 rounded-full">BEST VALUE</span>
+          <h3 class="font-bold text-sm mb-1">Yearly</h3>
+          <div class="text-2xl font-black text-blue-600 mb-3">₹4,999<span class="text-xs text-gray-500">/yr</span></div>
+          <button onclick="buyPlan('yearly')" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-xs">Choose</button>
+        </div>
+        <div class="border-2 border-gray-200 rounded-2xl p-4">
+          <h3 class="font-bold text-sm mb-1">Enterprise</h3>
+          <div class="text-2xl font-black mb-3">Custom</div>
+          <button onclick="contactEnterprise()" class="w-full bg-purple-600 text-white py-2 rounded-lg font-bold text-xs">Contact</button>
+        </div>
+      </div>
+      <button onclick="toggleModal('subscriptionModal')" class="w-full bg-gray-200 py-2 rounded font-bold text-sm">Close</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============== STATE ==============
+let currentAdmin = null;
+let allEmployees = [];
+let currentDashboardDate = new Date().toISOString().split('T')[0];
+let adminFaceMatcher = null;
+let trainingTargetEmp = null;
+let inactivityTimer;
+let chartDesktop = null;
+
+const adminVideo = document.getElementById('adminVideo');
+
+// ============== API ==============
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ============== SESSION ==============
+(async () => {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (res.status === 401) return;
+    const me = await res.json();
+    if (me.role === 'admin') {
+      currentAdmin = me.admin;
+      applyAdminDetails();
+    }
+  } catch (e) {}
+})();
+
+// ============== LOGIN ==============
+async function adminLogin() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+  try {
+    const r = await api('/api/auth/admin-login', { method: 'POST', body: { email, password } });
+    currentAdmin = r.admin;
+    applyAdminDetails();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function logout() {
+  stopVideoStream(adminVideo);
+  try { await api('/api/auth/admin-logout', { method: 'POST' }); } catch (e) {}
+  location.reload();
+}
+
+function applyAdminDetails() {
+  document.getElementById('headerTitle').innerText = currentAdmin.firm_name || 'Admin';
+  document.getElementById('desktopBrandTitle').innerText = currentAdmin.firm_name || 'Admin';
+  document.getElementById('desktopAdminUser').innerText = currentAdmin.email || 'Admin';
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('mainAppView').classList.remove('hidden');
+  document.getElementById('mainAppView').classList.add('flex');
+  document.getElementById('dashboardDatePicker').value = currentDashboardDate;
+  document.getElementById('desktopDateIndicator').innerText = currentDashboardDate;
+  document.getElementById('dailyReportDate').value = currentDashboardDate;
+  document.getElementById('monthlyReportPicker').value = currentDashboardDate.substring(0,7);
+  document.getElementById('leaveDateInput').value = currentDashboardDate;
+  document.getElementById('newHolidayDate').value = currentDashboardDate;
+
+  // Subscription gate
+  evaluateSubscription();
+  startIdleTimer();
+  loadDashboard();
+}
+
+// ============== SUBSCRIPTION ==============
+function evaluateSubscription() {
+  const sub = currentAdmin.subscription;
+  if (!sub) return;
+  const desktop = document.getElementById('trialBadge');
+  const mobile = document.getElementById('trialBadgeMobile');
+  let text = '', cls = '';
+
+  if (sub.state === 'trial') {
+    text = `Trial • ${sub.daysLeft}d left`;
+    cls = sub.daysLeft <= 2 ? 'bg-red-100 text-red-700' : sub.daysLeft <= 4 ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700';
+  } else if (sub.state === 'active') {
+    const plan = (sub.plan || 'plan');
+    text = `${plan.charAt(0).toUpperCase()+plan.slice(1)} • ${sub.daysLeft}d left`;
+    cls = 'bg-blue-100 text-blue-700';
+  } else {
+    text = 'Subscription Expired';
+    cls = 'bg-red-100 text-red-700';
+  }
+
+  if (desktop) { desktop.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 ${cls}`; desktop.innerText = text; desktop.classList.remove('hidden'); }
+  if (mobile) { mobile.className = `text-[10px] font-bold ${cls} px-2 py-0.5 rounded mt-0.5 inline-block`; mobile.innerText = text; mobile.classList.remove('hidden'); }
+
+  if (sub.blocked) openSubscriptionModal();
+}
+
+function openSubscriptionModal() {
+  document.getElementById('subModalTitle').innerText = 'Choose Your Plan';
+  document.getElementById('subModalSubtitle').innerText = 'Your trial has ended. Continue with a plan.';
+  document.getElementById('subscriptionModal').classList.remove('hidden');
+}
+
+async function buyPlan(plan) {
+  try {
+    const r = await api('/api/subscription/create-order', { method: 'POST', body: { plan } });
+    const { order, keyId } = r;
+    if (!window.Razorpay) return alert('Razorpay not loaded');
+    const rzp = new window.Razorpay({
+      key: keyId, amount: order.amount, currency: order.currency,
+      name: currentAdmin.firm_name, description: plan,
+      order_id: order.id, theme: { color: '#2563eb' },
+      handler: async (resp) => {
+        const v = await api('/api/subscription/verify', { method: 'POST', body: {
+          razorpay_order_id: resp.razorpay_order_id,
+          razorpay_payment_id: resp.razorpay_payment_id,
+          razorpay_signature: resp.razorpay_signature
+        }});
+        alert('Subscription activated!');
+        location.reload();
+      }
+    });
+    rzp.open();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function contactEnterprise() {
+  window.open('https://wa.me/919999999999?text=Enterprise%20plan%20interest', '_blank');
+}
+
+// ============== IDLE TIMER ==============
+function startIdleTimer() {
+  ['mousemove','keypress','touchstart','click'].forEach(ev => document.addEventListener(ev, resetTimer));
+  resetTimer();
+}
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  if (currentAdmin) {
+    inactivityTimer = setTimeout(() => { alert('Session expired'); logout(); }, 1800000);
+  }
+}
+
+// ============== TABS ==============
+function switchTab(tabName) {
+  ['dashboard','punch','reports','settings'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.add('hidden');
+    document.getElementById(`tab-${t}`).classList.remove('flex');
+    const m = document.getElementById(`nav-${t}`); if (m) m.className = "flex flex-col items-center w-1/4";
+    const d = document.getElementById(`desknav-${t}`); if (d) d.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition text-slate-400 hover:bg-slate-800";
+  });
+  document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+  document.getElementById(`tab-${tabName}`).classList.add('flex');
+  const m = document.getElementById(`nav-${tabName}`); if (m) m.className = "flex flex-col items-center text-blue-600 font-bold w-1/4";
+  const d = document.getElementById(`desknav-${tabName}`); if (d) d.className = "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition bg-blue-600 text-white";
+  document.getElementById('desktopBreadcrumb').innerText = {dashboard:'Dashboard',punch:'AI Kiosk',reports:'Reports',settings:'Settings'}[tabName];
+
+  if (tabName === 'punch') initAdminKiosk(); else stopVideoStream(adminVideo);
+  if (tabName === 'reports') generateDailyReport();
+}
+
+function switchReportSubTab(sub) {
+  ['daily','monthly'].forEach(s => {
+    document.getElementById(`report-view-${s}`).classList.add('hidden');
+    document.getElementById(`subtab-btn-${s}`).className = "flex-1 py-3 text-gray-500";
+  });
+  document.getElementById(`report-view-${sub}`).classList.remove('hidden');
+  document.getElementById(`subtab-btn-${sub}`).className = "flex-1 py-3 border-b-2 border-blue-600 text-blue-600 bg-white font-bold";
+  if (sub === 'daily') generateDailyReport();
+  if (sub === 'monthly') generateMonthlyReport();
+}
+
+function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+function stopVideoStream(v) { if (v && v.srcObject) { v.srcObject.getTracks().forEach(t => t.stop()); v.srcObject = null; } }
+
+// ============== DASHBOARD ==============
+function changeDashboardDate() {
+  currentDashboardDate = document.getElementById('dashboardDatePicker').value || new Date().toISOString().split('T')[0];
+  document.getElementById('desktopDateIndicator').innerText = currentDashboardDate;
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  try {
+    const [empRes, attRes] = await Promise.all([
+      api('/api/employees'),
+      api('/api/attendance?date=' + currentDashboardDate)
+    ]);
+    const employees = empRes.employees || [];
+    const attendance = attRes.attendance || [];
+    const standardHours = currentAdmin.standard_hours || 8;
+
+    allEmployees = employees.map(emp => {
+      const rec = attendance.find(a => a.employee_id === emp.id);
+      let status = 'missing', totalHrs = 0, punches = [], isLate = false;
+      if (rec && rec.punches && rec.punches.length > 0) {
+        punches = rec.punches;
+        status = punches[punches.length-1].out ? 'out' : 'in';
+        totalHrs = Number(rec.total_hours) || 0;
+        if (rec.status === 'Late') isLate = true;
+      }
+      if (rec && rec.status === 'Absent') status = 'missing';
+      if (rec && rec.status === 'Paid Leave') status = 'leave';
+      const otHours = totalHrs > standardHours ? totalHrs - standardHours : 0;
+      return { ...emp, status, isLate, totalHrs, otHours, punches, recordId: rec?.id };
+    });
+
+    updateStats(); filterList('all');
+    populateDropdowns();
+    updateFaceCounter();
+  } catch (e) { alert('Dashboard error: ' + e.message); }
+}
+
+function updateStats() {
+  document.getElementById('countAll').innerText = allEmployees.length;
+  document.getElementById('countIn').innerText = allEmployees.filter(e => e.status === 'in').length;
+  document.getElementById('countOut').innerText = allEmployees.filter(e => e.status === 'out').length;
+  document.getElementById('countMissing').innerText = allEmployees.filter(e => e.status === 'missing').length;
+  document.getElementById('countLate').innerText = allEmployees.filter(e => e.isLate).length;
+  renderChart();
+}
+
+function renderChart() {
+  const inC = allEmployees.filter(e => e.status === 'in').length;
+  const outC = allEmployees.filter(e => e.status === 'out').length;
+  const lateC = allEmployees.filter(e => e.isLate).length;
+  const absentC = allEmployees.filter(e => e.status === 'missing').length;
+  const data = {
+    labels: ['In','Out','Late','Absent'],
+    datasets: [{ data: [inC,outC,lateC,absentC], backgroundColor: ['#22c55e','#f97316','#ef4444','#9ca3af'], borderWidth: 2 }]
+  };
+  const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } };
+  const c = document.getElementById('todayRatioChartDesktop');
+  if (c) {
+    if (chartDesktop) chartDesktop.destroy();
+    chartDesktop = new Chart(c.getContext('2d'), { type: 'doughnut', data, options: opts });
+  }
+}
+
+function filterList(status) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('ring-2','ring-blue-400','bg-gray-100'));
+  const btn = document.getElementById(`btnFilter-${status}`); if (btn) btn.classList.add('ring-2','ring-blue-400','bg-gray-100');
+  if (status === 'all') renderList(allEmployees);
+  else if (status === 'late') renderList(allEmployees.filter(e => e.isLate));
+  else renderList(allEmployees.filter(e => e.status === status));
+}
+
+function renderList(list) {
+  const c = document.getElementById('employeeList');
+  if (!list.length) { c.innerHTML = '<div class="text-center text-gray-500 py-6 text-xs bg-white rounded-xl border">No employees.</div>'; return; }
+  c.innerHTML = list.map(emp => {
+    let badge = emp.status === 'missing' ? '<span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded font-bold">Absent</span>' :
+                emp.status === 'in' ? '<span class="bg-green-100 text-green-700 text-[10px] px-2 py-1 rounded font-bold">In</span>' :
+                emp.status === 'leave' ? '<span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-1 rounded font-bold">Leave</span>' :
+                '<span class="bg-orange-100 text-orange-700 text-[10px] px-2 py-1 rounded font-bold">Out</span>';
+    if (emp.isLate) badge += ' <span class="bg-red-100 text-red-700 text-[10px] px-2 py-1 rounded font-bold">Late</span>';
+    const shift = emp.work_timing || 'Not set';
+    const punchHTML = (!emp.punches || !emp.punches.length) 
+      ? '<div class="text-xs text-gray-400 p-2 bg-gray-50 rounded">No punches</div>'
+      : emp.punches.map((p, i) => `<div class="flex justify-between bg-gray-50 p-2 rounded mb-1 text-xs"><span>IN${i+1}: <b class="text-green-600">${fmtTime(p.in)}</b></span><span>OUT: <b class="text-orange-600">${fmtTime(p.out)}</b></span></div>`).join('');
+    return `<div class="bg-white border rounded-xl p-3 shadow-sm">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <p class="font-bold text-sm">${emp.name} <span class="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-mono">${emp.emp_code || 'EMP'}</span></p>
+          <p class="text-[10px] text-gray-500 mt-1">${shift} | ${emp.department || 'General'}</p>
+        </div>
+        <div class="text-right">${badge}<div class="text-xs mt-1"><span class="text-blue-600 font-bold">${emp.totalHrs.toFixed(2)}h</span></div></div>
+      </div>
+      ${punchHTML}
+      <div class="flex gap-1.5 mt-2 pt-2 border-t border-dashed">
+        <button onclick="overrideStatus('${emp.id}','Absent')" class="flex-1 bg-gray-50 hover:bg-red-50 text-gray-600 text-[10px] font-bold py-1.5 rounded border">Absent</button>
+        <button onclick="overrideStatus('${emp.id}','Late')" class="flex-1 bg-gray-50 hover:bg-orange-50 text-gray-600 text-[10px] font-bold py-1.5 rounded border">Late</button>
+        <button onclick="openCorrection('${emp.id}')" class="flex-1 bg-blue-50 text-blue-700 text-[10px] font-bold py-1.5 rounded border"><i class="fas fa-edit"></i> Edit</button>
+        <button onclick="openEmpMenu('${emp.id}')" class="px-2.5 bg-gray-100 text-gray-600 rounded text-xs"><i class="fas fa-ellipsis-v"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function fmtTime(iso) { if (!iso) return '--:--'; const d = new Date(iso); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }); }
+
+function searchEmployees() {
+  const t = document.getElementById('searchInput').value.toLowerCase();
+  renderList(allEmployees.filter(e => e.name.toLowerCase().includes(t) || (e.emp_code||'').toLowerCase().includes(t) || (e.department||'').toLowerCase().includes(t)));
+}
+
+async function overrideStatus(empId, status) {
+  try {
+    const emp = allEmployees.find(e => e.id === empId);
+    if (emp.recordId) {
+      await api('/api/attendance/' + emp.recordId, { method: 'PATCH', body: { status } });
+    } else {
+      // Create via admin override: we don't have a POST here, so we upsert via patch after creation
+      // Simplest: reuse bulk pattern — insert via a direct call
+      alert('No record exists for this date. Use Edit to create one.');
+      return;
+    }
+    loadDashboard();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// ============== EMPLOYEE CRUD ==============
+function openAddEmployeeModal() {
+  document.getElementById('editEmpId').value = '';
+  document.getElementById('formEmployeeTitle').innerHTML = '<i class="fas fa-user-plus text-blue-500"></i> New Employee';
+  ['eName','eCode','eLogin','ePass','eSalary','eRate'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('eDept').value = 'General';
+  document.getElementById('eTimingType').value = 'Single';
+  handleTimingChange();
+  toggleModal('addEmployeeModal');
+}
+
+function handleTimingChange() {
+  const t = document.getElementById('eTimingType').value;
+  document.getElementById('timingSingle').classList.toggle('hidden', t !== 'Single');
+  document.getElementById('timingDual').classList.toggle('hidden', t !== 'Dual');
+}
+
+async function saveEmployee() {
+  const editId = document.getElementById('editEmpId').value;
+  const name = document.getElementById('eName').value.trim();
+  const emp_code = document.getElementById('eCode').value.trim();
+  const login_id = document.getElementById('eLogin').value.trim();
+  const password = document.getElementById('ePass').value.trim();
+  const department = document.getElementById('eDept').value;
+  const timingType = document.getElementById('eTimingType').value;
+  const work_timing = timingType === 'Single'
+    ? `${document.getElementById('eStart1').value}-${document.getElementById('eEnd1').value}`
+    : `${document.getElementById('eDStart1').value}-${document.getElementById('eDEnd1').value},${document.getElementById('eDStart2').value}-${document.getElementById('eDEnd2').value}`;
+  const monthly_salary = parseFloat(document.getElementById('eSalary').value) || 0;
+  const overtime_rate = parseFloat(document.getElementById('eRate').value) || 0;
+
+  if (!name || !login_id || !password) return alert('Name, Login ID, Password required');
+
+  const body = { name, emp_code, login_id, password, department, work_timing, monthly_salary, overtime_rate };
+  try {
+    if (editId) await api('/api/employees/' + editId, { method: 'PATCH', body });
+    else await api('/api/employees', { method: 'POST', body });
+    toggleModal('addEmployeeModal');
+    loadDashboard();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function openEmpMenu(empId) {
+  const emp = allEmployees.find(e => e.id === empId);
+  if (!emp) return;
+  const action = prompt(`Options for ${emp.name}:\n1: Edit\n2: Register Face\n3: Reset Password\n4: Delete`);
+  if (action === '1') {
+    document.getElementById('editEmpId').value = emp.id;
+    document.getElementById('formEmployeeTitle').innerHTML = `<i class="fas fa-user-edit text-blue-500"></i> Edit: ${emp.name}`;
+    document.getElementById('eName').value = emp.name;
+    document.getElementById('eCode').value = emp.emp_code || '';
+    document.getElementById('eLogin').value = emp.login_id || '';
+    document.getElementById('ePass').value = emp.password || '';
+    document.getElementById('eDept').value = emp.department || 'General';
+    document.getElementById('eSalary').value = emp.monthly_salary || '';
+    document.getElementById('eRate').value = emp.overtime_rate || '';
+    toggleModal('addEmployeeModal');
+  } else if (action === '2') {
+    openFaceTraining(emp);
+  } else if (action === '3') {
+    const np = prompt('New password:');
+    if (np && np.length >= 4) {
+      api('/api/employees/' + emp.id, { method: 'PATCH', body: { password: np } })
+        .then(() => alert('Password updated')).catch(e => alert(e.message));
+    }
+  } else if (action === '4') {
+    if (confirm('Delete ' + emp.name + '?')) {
+      api('/api/employees/' + emp.id, { method: 'DELETE' }).then(() => loadDashboard()).catch(e => alert(e.message));
+    }
+  }
+}
+
+// ============== CORRECTION ==============
+function openCorrection(empId) {
+  const emp = allEmployees.find(e => e.id === empId);
+  document.getElementById('correctEmpId').value = emp.id;
+  document.getElementById('correctDate').value = currentDashboardDate;
+  document.getElementById('correctEmpName').innerText = emp.name;
+  document.getElementById('correctStatus').value = emp.status === 'in' || emp.status === 'out' ? 'Present' : 'Absent';
+  const s1 = emp.punches[0] || {}; const s2 = emp.punches[1] || {};
+  document.getElementById('correctS1In').value = s1.in ? to24(s1.in) : '';
+  document.getElementById('correctS1Out').value = s1.out ? to24(s1.out) : '';
+  document.getElementById('correctS2In').value = s2.in ? to24(s2.in) : '';
+  document.getElementById('correctS2Out').value = s2.out ? to24(s2.out) : '';
+  toggleModal('correctionModal');
+}
+
+function to24(iso) { const d = new Date(iso); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+
+async function saveCorrection() {
+  const empId = document.getElementById('correctEmpId').value;
+  const date = document.getElementById('correctDate').value;
+  const status = document.getElementById('correctStatus').value;
+  const s1i = document.getElementById('correctS1In').value;
+  const s1o = document.getElementById('correctS1Out').value;
+  const s2i = document.getElementById('correctS2In').value;
+  const s2o = document.getElementById('correctS2Out').value;
+  const punches = [];
+  let total = 0;
+  const toISO = (t) => t ? new Date(`${date}T${t}:00`).toISOString() : null;
+  if (s1i) { const p = { in: toISO(s1i), out: s1o ? toISO(s1o) : null }; if (p.out) total += (new Date(p.out) - new Date(p.in)) / 3600000; punches.push(p); }
+  if (s2i) { const p = { in: toISO(s2i), out: s2o ? toISO(s2o) : null }; if (p.out) total += (new Date(p.out) - new Date(p.in)) / 3600000; punches.push(p); }
+
+  const payload = { employee_id: empId, date, status, punches, total_hours: Math.max(0, total), is_manual_override: true };
+  try {
+    // Try to update; if no record, create via employee upsert through admin endpoint — but we don't have POST. So use bulk upsert fallback.
+    const existing = allEmployees.find(e => e.id === empId)?.recordId;
+    if (existing) await api('/api/attendance/' + existing, { method: 'PATCH', body: payload });
+    else alert('No existing record to update. Please punch first, then correct.');
+    toggleModal('correctionModal');
+    loadDashboard();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+// ============== AI KIOSK ==============
+async function initAdminKiosk() {
+  const status = document.getElementById('adminStatusText');
+  status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading AI...';
+  try {
+    if (faceapi.tf) { try { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch(e){} }
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
+    const labeled = [];
+    allEmployees.forEach(emp => {
+      if (emp.face_descriptor) {
+        try {
+          labeled.push(new faceapi.LabeledFaceDescriptors(emp.id, [new Float32Array(JSON.parse(emp.face_descriptor))]));
+        } catch(e){}
+      }
+    });
+    if (labeled.length > 0) {
+      adminFaceMatcher = new faceapi.FaceMatcher(labeled, 0.55);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      adminVideo.srcObject = stream;
+      status.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Scanner Ready';
+    } else {
+      status.innerHTML = '<i class="fas fa-exclamation-circle text-amber-400"></i> No registered faces';
+    }
+  } catch (e) {
+    console.error(e);
+    status.innerHTML = '<i class="fas fa-video-slash text-red-500"></i> Scanner offline';
+  }
+}
+
+async function adminKioskPunch(type) {
+  if (!adminFaceMatcher) return alert('Scanner not ready');
+  const status = document.getElementById('adminStatusText');
+  status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Scanning...';
+  try {
+    const det = await faceapi.detectSingleFace(adminVideo).withFaceLandmarks().withFaceDescriptor();
+    if (!det) { status.innerHTML = '<i class="fas fa-check-circle text-green-400"></i>Ready'; return alert('No face detected'); }
+    const match = adminFaceMatcher.findBestMatch(det.descriptor);
+    if (match.label === 'unknown') { status.innerHTML = '<i class="fas fa-check-circle text-green-400"></i>Ready'; return alert('Not recognized'); }
+    const emp = allEmployees.find(e => e.id === match.label);
+    await adminPunchTransaction(emp, type);
+    status.innerHTML = `<span class="text-green-400">${emp.name} punched ${type.toUpperCase()}</span>`;
+    setTimeout(() => { status.innerHTML = '<i class="fas fa-check-circle text-green-400"></i>Ready'; loadDashboard(); }, 2000);
+  } catch (e) { alert(e.message); status.innerHTML = '<i class="fas fa-check-circle text-green-400"></i>Ready'; }
+}
+
+async function adminPunchTransaction(emp, type) {
+  // Admin kiosk punch: uses employee's session? No — we call a dedicated path.
+  // For now, use direct Supabase-like flow: admin creates/updates attendance via PATCH.
+  const date = new Date().toISOString().split('T')[0];
+  const rec = allEmployees.find(e => e.id === emp.id);
+  const now = new Date().toISOString();
+  let punches = rec?.punches || [];
+  let totalHrs = rec?.totalHrs || 0;
+
+  if (type === 'in') {
+    if (punches.length && !punches[punches.length-1].out) throw new Error('Already punched IN');
+    punches.push({ in: now });
+  } else {
+    if (!punches.length || punches[punches.length-1].out) throw new Error('Punch IN first');
+    const last = punches[punches.length-1];
+    last.out = now;
+    totalHrs += (new Date(last.out) - new Date(last.in)) / 3600000;
+  }
+  const payload = { punches, total_hours: totalHrs, status: type === 'in' ? 'Present' : 'Out' };
+  if (rec?.recordId) {
+    await api('/api/attendance/' + rec.recordId, { method: 'PATCH', body: payload });
+  } else if (type === 'in') {
+    // No record: create via a temporary path — use employees list is fine, we can upsert via bulk pattern
+    // For simplicity, we require the employee to have punched at least once OR use bulk endpoint
+    alert('No attendance record yet — employee must punch via user.html first, then admin can manage.');
+    throw new Error('No record');
+  }
+}
+
+async function fallbackSelfiePunch(type) {
+  const empId = document.getElementById('fallbackEmpSelect').value;
+  if (!empId) return alert('Select employee');
+  const video = document.getElementById('adminVideo');
+  if (!video.srcObject) return alert('Camera not ready');
+
+  const canvas = document.getElementById('fallbackCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const img = canvas.toDataURL('image/jpeg', 0.8);
+
+  try {
+    const emp = allEmployees.find(e => e.id === empId);
+    await adminPunchTransaction(emp, type);
+    await api('/api/attendance/upload-selfie', { method: 'POST', body: {
+      employee_id: empId, punch_type: type, image_base64: img
+    }});
+    alert(`${emp.name} punched ${type.toUpperCase()}`);
+    loadDashboard();
+  } catch (e) { alert('Failed: ' + e.message); }
+}
+
+function populateDropdowns() {
+  const opts = allEmployees.map(e => `<option value="${e.id}">${e.name} (${e.emp_code || 'EMP'})</option>`).join('');
+  const fb = document.getElementById('fallbackEmpSelect'); if (fb) fb.innerHTML = '<option value="">-- Select --</option>' + opts;
+  const lv = document.getElementById('leaveEmpSelect'); if (lv) lv.innerHTML = opts;
+}
+
+function updateFaceCounter() {
+  const count = allEmployees.filter(e => e.face_descriptor).length;
+  const el = document.getElementById('faceRegisteredCount');
+  if (el) el.innerText = `${count} / ${allEmployees.length}`;
+}
+
+// ============== FACE TRAINING ==============
+async function openFaceTraining(emp) {
+  trainingTargetEmp = emp;
+  const modal = document.createElement('div');
+  modal.id = 'faceTrainModal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-75 z-[80] flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-xl p-5 w-full max-w-sm">
+      <h3 class="font-bold mb-2">Train: ${emp.name}</h3>
+      <video id="trainVideo" autoplay muted playsinline class="w-56 h-56 mx-auto bg-black rounded mb-3 transform scale-x-[-1]"></video>
+      <p id="trainStatus" class="text-xs text-gray-500 mb-3 text-center">Center face, tap Register</p>
+      <div class="flex gap-2">
+        <button onclick="closeTrainModal()" class="flex-1 bg-gray-200 py-2 rounded font-bold text-sm">Close</button>
+        <button onclick="captureFace()" class="flex-1 bg-green-600 text-white py-2 rounded font-bold text-sm">Register</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  try {
+    if (faceapi.tf) { try { await faceapi.tf.setBackend('cpu'); await faceapi.tf.ready(); } catch(e){} }
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    document.getElementById('trainVideo').srcObject = stream;
+  } catch (e) { alert('Camera denied'); closeTrainModal(); }
+}
+
+async function captureFace() {
+  if (!trainingTargetEmp) return;
+  const video = document.getElementById('trainVideo');
+  const det = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+  if (!det) return alert('No face detected');
+  const desc = JSON.stringify(Array.from(det.descriptor));
+  try {
+    await api('/api/employees/' + trainingTargetEmp.id, { method: 'PATCH', body: { face_descriptor: desc } });
+    alert('Face registered');
+    closeTrainModal();
+    loadDashboard();
+  } catch (e) { alert(e.message); }
+}
+
+function closeTrainModal() {
+  const m = document.getElementById('faceTrainModal');
+  if (m) {
+    const v = document.getElementById('trainVideo');
+    if (v && v.srcObject) v.srcObject.getTracks().forEach(t => t.stop());
+    m.remove();
+  }
+  trainingTargetEmp = null;
+}
+
+// ============== REPORTS ==============
+async function generateDailyReport() {
+  const date = document.getElementById('dailyReportDate').value || currentDashboardDate;
+  document.getElementById('dailyReportTableBody').innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-400">Loading...</td></tr>';
+  try {
+    const r = await api('/api/reports/daily?date=' + date);
+    const rows = r.rows;
+    const t = r.totals;
+    document.getElementById('dailyKpiEmp').innerText = t.employees;
+    document.getElementById('dailyKpiPresent').innerText = t.present;
+    document.getElementById('dailyKpiAbsent').innerText = t.absent;
+    document.getElementById('dailyKpiLate').innerText = t.late;
+    document.getElementById('dailyKpiHours').innerText = t.totalHours.toFixed(1) + 'h';
+    document.getElementById('dailyKpiOtHours').innerText = t.totalOt.toFixed(1) + 'h';
+
+    document.getElementById('dailyReportTableBody').innerHTML = rows.map(row => {
+      const s1 = row.punches[0] || {}; const s2 = row.punches[1] || {};
+      return `<tr class="hover:bg-gray-50">
+        <td class="p-2.5"><b>${row.name}</b><br><span class="text-[10px] text-gray-400 font-mono">${row.code || '-'}</span></td>
+        <td class="p-2.5">${row.department || '-'}</td>
+        <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${row.status === 'Present' ? 'bg-green-50 text-green-600' : row.status === 'Late' ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'}">${row.status}</span></td>
+        <td class="p-2.5 font-mono text-[11px]">${fmtTime(s1.in)} → ${fmtTime(s1.out)}</td>
+        <td class="p-2.5 font-mono text-[11px]">${fmtTime(s2.in)} → ${fmtTime(s2.out)}</td>
+        <td class="p-2.5 text-right">${row.totalHours.toFixed(1)}h ${row.ot > 0 ? `<span class="text-purple-600 block text-[10px]">+${row.ot.toFixed(1)}h OT</span>` : ''}</td>
+        <td class="p-2.5 text-right font-bold text-blue-600">₹${row.estDailyPay.toFixed(0)}</td>
+        <td class="p-2.5 text-center"><button onclick="viewPhoto('${row.employee_id}','${row.name.replace(/'/g,"\\'")}','${date}')" class="text-blue-500 bg-blue-50 p-1.5 rounded"><i class="fas fa-camera"></i></button></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="8" class="text-center p-4 text-gray-400">No data</td></tr>';
+  } catch (e) { document.getElementById('dailyReportTableBody').innerHTML = `<tr><td colspan="8" class="text-center p-4 text-red-500">${e.message}</td></tr>`; }
+}
+
+async function generateMonthlyReport() {
+  const month = document.getElementById('monthlyReportPicker').value;
+  if (!month) return;
+  document.getElementById('monthlyReportTableBody').innerHTML = '<tr><td colspan="6" class="text-center p-4 text-gray-400">Loading...</td></tr>';
+  try {
+    const r = await api('/api/reports/monthly?month=' + month);
+    document.getElementById('monthlyKpiPresents').innerText = r.totals.presents;
+    document.getElementById('monthlyKpiOtHours').innerText = r.totals.otHours.toFixed(1) + 'h';
+    document.getElementById('monthlyKpiPayroll').innerText = '₹' + Math.round(r.totals.payroll).toLocaleString('en-IN');
+    document.getElementById('monthlyReportTableBody').innerHTML = r.rows.map(row => `
+      <tr class="hover:bg-gray-50">
+        <td class="p-2.5"><b>${row.name}</b></td>
+        <td class="p-2.5">${row.department || '-'}</td>
+        <td class="p-2.5 font-mono text-[11px]"><span class="text-green-600 font-bold">${row.presents}P</span>/<span class="text-red-500 font-bold">${row.absents}A</span>/<span class="text-orange-500 font-bold">${row.lates}L</span></td>
+        <td class="p-2.5 text-right">${row.totalHours.toFixed(1)}h <span class="block text-[10px] text-purple-600">+${row.otHours.toFixed(1)}h OT</span></td>
+        <td class="p-2.5 text-right text-[11px]">₹${Math.round(row.basePay)} <span class="text-purple-600 block">+₹${Math.round(row.otPay)}</span></td>
+        <td class="p-2.5 text-right font-bold text-blue-600">₹${Math.round(row.gross).toLocaleString('en-IN')}</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="text-center p-4 text-gray-400">No data</td></tr>';
+  } catch (e) { document.getElementById('monthlyReportTableBody').innerHTML = `<tr><td colspan="6" class="text-center p-4 text-red-500">${e.message}</td></tr>`; }
+}
+
+async function exportCSV() {
+  const date = document.getElementById('dailyReportDate').value;
+  const r = await api('/api/reports/daily?date=' + date);
+  let csv = 'Date,Name,Code,Dept,Status,TotalHours,OT,Pay\n';
+  r.rows.forEach(row => { csv += `"${date}","${row.name}","${row.code||'-'}","${row.department||'-'}","${row.status}",${row.totalHours.toFixed(2)},${row.ot.toFixed(2)},${row.estDailyPay.toFixed(2)}\n`; });
+  download(csv, `Daily_${date}.csv`);
+}
+
+async function exportMonthlyCSV() {
+  const month = document.getElementById('monthlyReportPicker').value;
+  const r = await api('/api/reports/monthly?month=' + month);
+  let csv = 'Month,Name,Present,Absent,Late,Hours,OT,Gross\n';
+  r.rows.forEach(row => { csv += `"${month}","${row.name}",${row.presents},${row.absents},${row.lates},${row.totalHours.toFixed(2)},${row.otHours.toFixed(2)},${row.gross.toFixed(2)}\n`; });
+  download(csv, `Monthly_${month}.csv`);
+}
+
+function download(csv, name) {
+  const b = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = name;
+  a.click();
+}
+
+async function viewPhoto(empId, name, date) {
+  document.getElementById('photoEmpName').innerText = `${name} - ${date}`;
+  document.getElementById('photoIn').classList.add('hidden');
+  document.getElementById('photoOut').classList.add('hidden');
+  document.getElementById('photoInEmpty').classList.remove('hidden');
+  document.getElementById('photoOutEmpty').classList.remove('hidden');
+  toggleModal('photoModal');
+  try {
+    const r = await api(`/api/attendance/photos?employee_id=${empId}&date=${date}`);
+    if (r.in_url) { document.getElementById('photoIn').src = r.in_url; document.getElementById('photoIn').classList.remove('hidden'); document.getElementById('photoInEmpty').classList.add('hidden'); }
+    if (r.out_url) { document.getElementById('photoOut').src = r.out_url; document.getElementById('photoOut').classList.remove('hidden'); document.getElementById('photoOutEmpty').classList.add('hidden'); }
+  } catch (e) { console.error(e); }
+}
+
+// ============== SETTINGS ==============
+function openSettingsModal(type) {
+  const modal = document.getElementById(type === 'location' ? 'locationModal' : type === 'calendar' ? 'calendarModal' : 'salaryModal');
+  if (type === 'location') {
+    document.getElementById('locLat').value = currentAdmin.geo_lat || '';
+    document.getElementById('locLong').value = currentAdmin.geo_lng || '';
+    document.getElementById('locRadius').value = currentAdmin.geo_radius || '';
+  } else if (type === 'calendar') {
+    const wos = (currentAdmin.weekly_offs || '').split(',');
+    document.querySelectorAll('.wo-cb').forEach(cb => cb.checked = wos.includes(cb.value));
+  } else {
+    document.getElementById('cfgStandardHours').value = currentAdmin.standard_hours || 8;
+    document.getElementById('cfgOtMultiplier').value = currentAdmin.ot_multiplier || 1.5;
+    document.getElementById('cfgGrace').value = currentAdmin.grace_period_mins || 15;
+  }
+  modal.classList.remove('hidden');
+}
+
+function scanLocation() {
+  navigator.geolocation.getCurrentPosition(p => {
+    document.getElementById('locLat').value = p.coords.latitude;
+    document.getElementById('locLong').value = p.coords.longitude;
+  }, e => alert(e.message), { enableHighAccuracy: true });
+}
+
+async function saveLocation() {
+  const lat = parseFloat(document.getElementById('locLat').value) || null;
+  const lng = parseFloat(document.getElementById('locLong').value) || null;
+  const radius = parseFloat(document.getElementById('locRadius').value) || null;
+  await api('/api/settings', { method: 'PATCH', body: { geo_lat: lat, geo_lng: lng, geo_radius: radius } });
+  currentAdmin.geo_lat = lat; currentAdmin.geo_lng = lng; currentAdmin.geo_radius = radius;
+  toggleModal('locationModal');
+  alert('Saved');
+}
+
+async function saveCalendar() {
+  const wos = Array.from(document.querySelectorAll('.wo-cb:checked')).map(c => c.value).join(',');
+  await api('/api/settings', { method: 'PATCH', body: { weekly_offs: wos } });
+  currentAdmin.weekly_offs = wos;
+  toggleModal('calendarModal');
+  alert('Saved');
+}
+
+async function saveSalaryConfig() {
+  const sh = parseFloat(document.getElementById('cfgStandardHours').value) || 8;
+  const om = parseFloat(document.getElementById('cfgOtMultiplier').value) || 1.5;
+  const gp = parseInt(document.getElementById('cfgGrace').value) || 15;
+  await api('/api/settings', { method: 'PATCH', body: { standard_hours: sh, ot_multiplier: om, grace_period_mins: gp } });
+  currentAdmin.standard_hours = sh; currentAdmin.ot_multiplier = om; currentAdmin.grace_period_mins = gp;
+  toggleModal('salaryModal');
+  alert('Saved');
+}
+
+async function changePassword() {
+  const np = document.getElementById('newPass').value;
+  const cp = document.getElementById('confPass').value;
+  if (np !== cp) return alert('Passwords do not match');
+  if (np.length < 4) return alert('Too short');
+  await api('/api/settings', { method: 'PATCH', body: { password: np } });
+  alert('Password updated');
+  toggleModal('passwordModal');
+}
+
+// ============== LEAVE ==============
+async function openLeaveModal() {
+  populateDropdowns();
+  toggleModal('leaveModal');
+  loadLeaveHistory();
+}
+
+async function loadLeaveHistory() {
+  try {
+    const r = await api('/api/leaves');
+    const list = r.leaves || [];
+    document.getElementById('leaveHistory').innerHTML = list.length 
+      ? list.slice(0,10).map(l => `<div class="flex justify-between bg-gray-50 p-2 rounded mb-1"><span>${l.leave_date} — ${l.leave_type}</span><button onclick="deleteLeave('${l.id}')" class="text-red-500 text-[10px]">Del</button></div>`).join('')
+      : '<div class="text-gray-400">No leaves</div>';
+  } catch (e) {}
+}
+
+async function submitLeave() {
+  const body = {
+    employee_id: document.getElementById('leaveEmpSelect').value,
+    leave_date: document.getElementById('leaveDateInput').value,
+    leave_type: document.getElementById('leaveTypeSelect').value,
+    reason: document.getElementById('leaveReasonInput').value
+  };
+  try {
+    await api('/api/leaves', { method: 'POST', body });
+    alert('Leave recorded');
+    loadLeaveHistory();
+    loadDashboard();
+  } catch (e) { alert(e.message); }
+}
+
+async function deleteLeave(id) {
+  if (!confirm('Delete?')) return;
+  await api('/api/leaves/' + id, { method: 'DELETE' });
+  loadLeaveHistory();
+}
+
+// ============== HOLIDAY ==============
+async function openHolidayModal() {
+  toggleModal('holidayModal');
+  loadHolidayList();
+}
+
+async function loadHolidayList() {
+  try {
+    const r = await api('/api/holidays');
+    const list = r.holidays || [];
+    document.getElementById('holidayList').innerHTML = list.length
+      ? list.map(h => `<div class="flex justify-between bg-red-50 p-2 rounded mb-1"><span>${h.holiday_date} — ${h.name}</span><button onclick="deleteHoliday('${h.id}')" class="text-red-600">Del</button></div>`).join('')
+      : '<div class="text-gray-400">No holidays</div>';
+  } catch (e) {}
+}
+
+async function addHoliday() {
+  const date = document.getElementById('newHolidayDate').value;
+  const name = document.getElementById('newHolidayName').value;
+  if (!date) return alert('Pick date');
+  await api('/api/holidays', { method: 'POST', body: { holiday_date: date, name, target: 'all' } });
+  loadHolidayList();
+  loadDashboard();
+}
+
+async function deleteHoliday(id) {
+  if (!confirm('Delete?')) return;
+  await api('/api/holidays/' + id, { method: 'DELETE' });
+  loadHolidayList();
+}
+
+// ============== BULK ==============
+function openBulkModal() { toggleModal('bulkModal'); }
+
+async function bulkMarkAbsent() {
+  alert('Bulk operations require a dedicated endpoint. Feature available in next update.');
+  toggleModal('bulkModal');
+}
+
+async function bulkApproveOt() {
+  alert('Bulk OT approval requires a dedicated endpoint. Feature available in next update.');
+  toggleModal('bulkModal');
+}
+</script>
+</body>
+</html>

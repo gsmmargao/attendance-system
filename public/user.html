@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Employee Punch Portal</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:,">
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 flex justify-center min-h-screen select-none">
+<div class="w-full max-w-md bg-white min-h-screen shadow-lg flex flex-col relative overflow-hidden">
+
+  <!-- ============== LOGIN VIEW ============== -->
+  <div id="loginView" class="p-8 flex flex-col justify-center min-h-screen bg-white z-50 absolute inset-0">
+    <div class="text-center mb-8">
+      <i class="fas fa-user-clock text-5xl text-blue-600 mb-3"></i>
+      <h1 class="text-3xl font-bold text-gray-800">Employee</h1>
+      <p class="text-gray-500 text-sm mt-1">Self-Punch Portal</p>
+    </div>
+
+    <form onsubmit="event.preventDefault(); userLogin();" class="flex flex-col">
+      <input type="text" id="userId" placeholder="Login ID" class="p-4 border rounded-lg mb-4 bg-gray-50 outline-none focus:border-blue-500" required>
+      <input type="password" id="userPassword" placeholder="Password" class="p-4 border rounded-lg mb-6 bg-gray-50 outline-none focus:border-blue-500" required>
+      <button type="submit" id="btnLogin" class="bg-blue-600 text-white p-4 rounded-lg font-bold shadow-lg active:scale-95 transition">Login</button>
+    </form>
+
+    <p id="loginError" class="text-red-500 text-xs text-center mt-3 hidden"></p>
+
+    <div class="mt-8 border-t border-gray-100 pt-6">
+      <p class="text-center text-xs text-gray-400 font-semibold mb-3 uppercase tracking-wider">Switch Portal</p>
+      <a href="/admin.html" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 p-3.5 rounded-lg font-bold shadow-sm active:scale-95 transition flex justify-center items-center gap-2">
+        <i class="fas fa-user-shield text-lg"></i>
+        <span>Admin Portal</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============== APP VIEW ============== -->
+  <div id="appView" class="hidden flex-col min-h-screen w-full bg-gray-50">
+    <div class="bg-blue-600 p-4 text-white flex justify-between items-center shadow-md z-10 sticky top-0">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-user-circle text-2xl"></i>
+        <span id="userNameHeader" class="font-bold truncate max-w-[200px]">Welcome</span>
+      </div>
+      <button onclick="logout()" class="p-1"><i class="fas fa-sign-out-alt text-xl hover:text-red-300"></i></button>
+    </div>
+
+    <div class="h-72 bg-black relative flex items-center justify-center overflow-hidden m-4 rounded-2xl shadow-inner border-4 border-gray-200 flex-shrink-0">
+      <video id="video" autoplay muted playsinline class="object-cover w-full h-full transform scale-x-[-1]"></video>
+      <div class="absolute inset-0 border-2 border-dashed border-white opacity-40 m-8 rounded-full pointer-events-none flex items-center justify-center">
+        <div class="w-full h-full bg-black bg-opacity-20 rounded-full"></div>
+      </div>
+      <div class="absolute bottom-4 left-0 right-0 flex justify-center">
+        <p id="statusText" class="text-white bg-black bg-opacity-70 px-4 py-2 rounded-full font-semibold text-xs tracking-wider uppercase backdrop-blur-sm shadow-lg">
+          <i class="fas fa-spinner fa-spin mr-2"></i>Loading Camera...
+        </p>
+      </div>
+    </div>
+
+    <div class="flex-grow flex flex-col justify-start px-6 pb-8">
+
+      <!-- Register face -->
+      <div id="registerControls" class="hidden flex-col items-center mb-4">
+        <p class="text-xs text-gray-500 text-center mb-3">Face not registered yet. Center your face and tap below.</p>
+        <button onclick="registerFace()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95 transition flex justify-center items-center gap-2">
+          <i class="fas fa-camera"></i> REGISTER MY FACE
+        </button>
+      </div>
+
+      <!-- Punch controls -->
+      <div id="punchControls" class="hidden flex-col gap-4">
+
+        <div class="grid grid-cols-2 gap-4">
+          <button onclick="punch('in')" class="bg-green-500 hover:bg-green-600 text-white py-5 rounded-2xl font-bold text-lg shadow-[0_4px_14px_0_rgba(34,197,94,0.39)] active:scale-95 transition flex flex-col items-center gap-1">
+            <i class="fas fa-sign-in-alt text-2xl"></i> PUNCH IN
+          </button>
+          <button onclick="punch('out')" class="bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-bold text-lg shadow-[0_4px_14px_0_rgba(249,115,22,0.39)] active:scale-95 transition flex flex-col items-center gap-1">
+            <i class="fas fa-sign-out-alt text-2xl"></i> PUNCH OUT
+          </button>
+        </div>
+
+        <p id="punchStatusMsg" class="text-center text-sm font-medium text-gray-500">Position face in frame and tap to punch.</p>
+
+        <div class="mt-2 flex items-center text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+          <div class="flex-1 border-t border-gray-300"></div>
+          <span class="px-3">Fallback: AI Failed?</span>
+          <div class="flex-1 border-t border-gray-300"></div>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col gap-3">
+          <p class="text-[11px] text-gray-500 text-center leading-tight">If face recognition fails, take a live selfie below to punch.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="selfiePunch('in')" class="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-xs shadow active:scale-95 transition flex flex-col items-center gap-1">
+              <i class="fas fa-camera"></i> Selfie IN
+            </button>
+            <button onclick="selfiePunch('out')" class="bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl font-bold text-xs shadow active:scale-95 transition flex flex-col items-center gap-1">
+              <i class="fas fa-camera"></i> Selfie OUT
+            </button>
+          </div>
+        </div>
+
+        <canvas id="captureCanvas" class="hidden"></canvas>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const video = document.getElementById('video');
+const statusText = document.getElementById('statusText');
+let currentEmployee = null;
+let adminGeofence = null;
+let modelsReady = false;
+
+// ---------- API helper ----------
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ---------- Session check on load ----------
+(async () => {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' });
+    if (res.status === 401) return; // not logged in — expected
+    const me = await res.json();
+    if (me.role === 'employee') {
+      currentEmployee = me.employee;
+      adminGeofence = me.geofence;
+      showApp();
+    }
+  } catch (e) { /* ignore */ }
+})();
+
+// ---------- Login ----------
+async function userLogin() {
+  const login_id = document.getElementById('userId').value.trim();
+  const password = document.getElementById('userPassword').value.trim();
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('btnLogin');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Logging in...';
+  try {
+    const r = await api('/api/auth/user-login', { method: 'POST', body: { login_id, password } });
+    currentEmployee = r.employee;
+    adminGeofence = r.geofence;
+    showApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+}
+
+// ---------- Logout ----------
+async function logout() {
+  stopVideo();
+  try { await api('/api/auth/user-logout', { method: 'POST' }); } catch (e) {}
+  location.reload();
+}
+
+// ---------- Show app ----------
+function showApp() {
+  document.getElementById('loginView').classList.add('hidden');
+  document.getElementById('appView').classList.remove('hidden');
+  document.getElementById('appView').classList.add('flex');
+  document.getElementById('userNameHeader').innerText = currentEmployee.name;
+
+  if (!currentEmployee.has_face) {
+    document.getElementById('registerControls').classList.remove('hidden');
+    document.getElementById('registerControls').classList.add('flex');
+  } else {
+    document.getElementById('punchControls').classList.remove('hidden');
+    document.getElementById('punchControls').classList.add('flex');
+  }
+  loadModels();
+}
+
+// ---------- Face API ----------
+async function loadModels() {
+  statusText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading AI...';
+  try {
+    // Force CPU backend — WebGL often unavailable on Macs and some devices
+    if (faceapi.tf) {
+      try {
+        await faceapi.tf.setBackend('cpu');
+        await faceapi.tf.ready();
+        console.log('✅ TF backend:', faceapi.tf.getBackend());
+      } catch (backendErr) {
+        console.warn('Could not set CPU backend, trying default:', backendErr);
+      }
+    }
+
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+    await Promise.all([
+      faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ]);
+    modelsReady = true;
+    await startVideo();
+  } catch (e) {
+    statusText.innerHTML = '<i class="fas fa-exclamation-triangle mr-2 text-red-500"></i>AI load failed: ' + e.message;
+    console.error('Face API load error:', e);
+  }
+}
+
+async function startVideo() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    video.srcObject = stream;
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+  } catch (e) {
+    statusText.innerHTML = '<i class="fas fa-video-slash mr-2 text-red-500"></i>Camera denied';
+  }
+}
+
+function stopVideo() {
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+  }
+}
+
+// ---------- Register face ----------
+async function registerFace() {
+  if (!modelsReady) return alert('AI models not loaded yet');
+  statusText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Registering...';
+
+  const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+  if (!detection) {
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+    return alert('No face detected. Center your face in the oval.');
+  }
+
+  try {
+    const descriptorArray = Array.from(detection.descriptor);
+    await api('/api/employees/' + currentEmployee.id, {
+      method: 'PATCH',
+      body: { face_descriptor: JSON.stringify(descriptorArray) }
+    });
+    alert('Face registered!');
+    location.reload();
+  } catch (e) {
+    alert('Failed to save face: ' + e.message);
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+  }
+}
+
+// ---------- Geofence ----------
+function getGPS() {
+  return new Promise((resolve, reject) => {
+    if (!adminGeofence || !adminGeofence.geo_lat || !adminGeofence.geo_lng || !adminGeofence.geo_radius) {
+      return resolve({ lat: null, lng: null });
+    }
+    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      err => reject(new Error('Please enable GPS: ' + err.message)),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}
+
+// ---------- AI punch ----------
+async function punch(type) {
+  if (!modelsReady) return alert('AI models not loaded');
+  if (!currentEmployee.face_descriptor) return alert('Register your face first');
+
+  const msgEl = document.getElementById('punchStatusMsg');
+  try {
+    statusText.innerHTML = '<i class="fas fa-satellite-dish fa-spin mr-2 text-blue-400"></i>Checking location...';
+    const { lat, lng } = await getGPS();
+
+    statusText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying face...';
+    const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+    if (!detection) {
+      statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+      return alert('No face detected. Look at the camera.');
+    }
+
+    const live = detection.descriptor;
+    const saved = new Float32Array(JSON.parse(currentEmployee.face_descriptor));
+    const dist = faceapi.euclideanDistance(live, saved);
+    if (dist > 0.6) {
+      statusText.innerHTML = '<i class="fas fa-times-circle mr-2 text-red-400"></i>Match failed';
+      setTimeout(() => statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready', 2000);
+      return alert('Face does not match. Access denied.');
+    }
+
+    const r = await api('/api/attendance/punch', { method: 'POST', body: { type, lat, lng } });
+    msgEl.innerHTML = `<span class="text-green-600 font-bold">Punch ${type.toUpperCase()} at ${new Date().toLocaleTimeString()}</span>`;
+    alert(`Punch ${type.toUpperCase()} successful!`);
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+  } catch (e) {
+    alert('Punch failed: ' + e.message);
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+  }
+}
+
+// ---------- Fallback selfie punch ----------
+async function selfiePunch(type) {
+  const msgEl = document.getElementById('punchStatusMsg');
+  try {
+    statusText.innerHTML = '<i class="fas fa-satellite-dish fa-spin mr-2 text-blue-400"></i>Checking location...';
+    const { lat, lng } = await getGPS();
+
+    // 1. Punch (records attendance)
+    statusText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Recording punch...';
+    const punchRes = await api('/api/attendance/punch', { method: 'POST', body: { type, lat, lng } });
+
+    // 2. Capture canvas
+    statusText.innerHTML = '<i class="fas fa-camera mr-2"></i>Capturing selfie...';
+    const canvas = document.getElementById('captureCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+    // 3. Upload selfie
+    statusText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving photo...';
+    await api('/api/attendance/upload-selfie', {
+      method: 'POST',
+      body: {
+        employee_id: currentEmployee.id,
+        punch_type: type,
+        image_base64: imageBase64
+      }
+    });
+
+    msgEl.innerHTML = `<span class="text-green-600 font-bold">Selfie ${type.toUpperCase()} at ${new Date().toLocaleTimeString()}</span>`;
+    alert(`Selfie punch ${type.toUpperCase()} successful!`);
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+  } catch (e) {
+    alert('Selfie punch failed: ' + e.message);
+    statusText.innerHTML = '<i class="fas fa-check-circle mr-2 text-green-400"></i>Camera Ready';
+  }
+}
+</script>
+</body>
+</html>
