@@ -3,6 +3,9 @@ import { api } from '../../lib/auth.js';
 import { getSessionFromRequest } from '../../lib/session.js';
 import { evaluateAdminSubscription } from '../../lib/subscription.js';
 
+// Employee limits per plan
+const PLAN_LIMITS = { monthly: 10, yearly: 20 };
+
 export default api(async (req, res) => {
   const session = getSessionFromRequest(req);
   if (!session || session.role !== 'superadmin') {
@@ -37,7 +40,8 @@ export default api(async (req, res) => {
         firm_name,
         email,
         password,
-        employee_limit: employee_limit || 10
+        employee_limit: employee_limit || 10,
+        email_verified: true  // superadmin-created firms skip email verification
       }])
       .select()
       .single();
@@ -71,7 +75,21 @@ export default api(async (req, res) => {
     }
     if (!Object.keys(patch).length) return res.status(400).json({ error: 'No valid fields' });
 
-    const { data, error } = await supabase.from('admins').update(patch).eq('id', id).select().single();
+    // Auto-apply employee limit if plan changed but limit wasn't explicitly set
+    if ('subscription_plan' in patch && !('employee_limit' in patch)) {
+      const plan = patch.subscription_plan;
+      if (PLAN_LIMITS[plan] !== undefined) {
+        patch.employee_limit = PLAN_LIMITS[plan];
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('admins')
+      .update(patch)
+      .eq('id', id)
+      .select()
+      .single();
+
     if (error) return res.status(500).json({ error: error.message });
 
     await supabase.from('audit_logs').insert([{

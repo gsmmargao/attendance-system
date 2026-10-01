@@ -40,8 +40,17 @@ export default api(async (req, res) => {
       .select('*', { count: 'exact', head: true })
       .eq('admin_id', session.id);
 
-    if (count >= (admin?.employee_limit || 10)) {
-      return res.status(400).json({ error: 'Employee limit reached. Contact developer.' });
+    const planName = admin?.subscription_plan
+      ? admin.subscription_plan.charAt(0).toUpperCase() + admin.subscription_plan.slice(1)
+      : 'current';
+    const limit = admin?.employee_limit || 10;
+    if (count >= limit) {
+      return res.status(400).json({
+        error: `Employee limit reached (${limit}). Your ${planName} plan allows up to ${limit} employees. Upgrade your plan to add more.`,
+        code: 'EMPLOYEE_LIMIT_REACHED',
+        limit,
+        plan: admin?.subscription_plan || null
+      });
     }
 
     const { data, error } = await supabase

@@ -226,6 +226,7 @@
         <div class="flex border-b bg-gray-50 text-xs font-bold text-gray-600">
           <button onclick="switchReportSubTab('daily')" id="subtab-btn-daily" class="flex-1 py-3 border-b-2 border-blue-600 text-blue-600 bg-white"><i class="far fa-calendar-check"></i> Daily</button>
           <button onclick="switchReportSubTab('monthly')" id="subtab-btn-monthly" class="flex-1 py-3 text-gray-500"><i class="far fa-calendar-alt"></i> Monthly</button>
+          <button onclick="switchReportSubTab('exports')" id="subtab-btn-exports" class="flex-1 py-3 text-gray-500"><i class="fas fa-file-export"></i> Quick Exports</button>
         </div>
 
         <div id="report-view-daily" class="p-3 lg:p-6 flex flex-col flex-1">
@@ -273,6 +274,27 @@
               </tr></thead>
               <tbody id="monthlyReportTableBody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <div id="report-view-exports" class="hidden p-3 lg:p-6 flex-col flex-1">
+          <div class="max-w-2xl mx-auto w-full">
+            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">Download Reports</h3>
+            <div class="border rounded-xl divide-y bg-white overflow-hidden">
+              <button onclick="exportCSVDaily()" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 text-xs lg:text-sm text-gray-700 transition">
+                <div class="flex items-center gap-3"><i class="far fa-calendar-day text-blue-500 w-5"></i> <span class="font-medium">Daily Attendance Report</span></div>
+                <i class="fas fa-download text-gray-300"></i>
+              </button>
+              <button onclick="exportCSVMonthly()" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 text-xs lg:text-sm text-gray-700 transition">
+                <div class="flex items-center gap-3"><i class="far fa-calendar-alt text-indigo-500 w-5"></i> <span class="font-medium">Monthly Payroll Report</span></div>
+                <i class="fas fa-download text-gray-300"></i>
+              </button>
+              <button onclick="openEmployeeReportModal()" class="w-full flex items-center justify-between p-4 hover:bg-gray-50 text-xs lg:text-sm text-gray-700 transition">
+                <div class="flex items-center gap-3"><i class="fas fa-user-clock text-emerald-500 w-5"></i> <span class="font-medium">Individual Employee Monthly</span></div>
+                <i class="fas fa-download text-gray-300"></i>
+              </button>
+            </div>
+            <p class="text-xs text-gray-400 mt-4 text-center">All exports open in Excel / Google Sheets.</p>
           </div>
         </div>
       </div>
@@ -491,32 +513,88 @@
   </div>
 
   <!-- Subscription Modal -->
-  <div id="subscriptionModal" class="hidden absolute inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-3">
-    <div class="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-3xl max-h-[94vh] overflow-y-auto">
+  <div id="subscriptionModal" class="hidden absolute inset-0 bg-black bg-opacity-75 z-[70] flex items-center justify-center p-3 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl p-5 lg:p-6 w-full max-w-3xl max-h-[94vh] overflow-y-auto">
+
       <div class="text-center mb-5">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl mx-auto mb-3"><i class="fas fa-crown"></i></div>
-        <h2 id="subModalTitle" class="text-xl font-bold text-gray-800">Choose Your Plan</h2>
-        <p id="subModalSubtitle" class="text-xs text-gray-500 mt-1">Continue with a plan below.</p>
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl mx-auto mb-3 shadow-lg"><i class="fas fa-crown"></i></div>
+        <h2 id="subModalTitle" class="text-xl lg:text-2xl font-bold text-gray-800">Choose Your Plan</h2>
+        <p id="subModalSubtitle" class="text-xs lg:text-sm text-gray-500 mt-1">Your free trial has ended. Continue with a plan below.</p>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-        <div class="border-2 border-gray-200 rounded-2xl p-4">
-          <h3 class="font-bold text-sm mb-1">Monthly</h3>
-          <div class="text-2xl font-black mb-3">₹499<span class="text-xs text-gray-500">/mo</span></div>
-          <button onclick="buyPlan('monthly')" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-xs">Choose</button>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 mb-5">
+
+        <!-- MONTHLY -->
+        <div class="border-2 border-gray-200 rounded-2xl p-4 flex flex-col hover:border-blue-400 transition">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-800 text-sm">Monthly</h3>
+            <i class="fas fa-calendar-alt text-blue-500"></i>
+          </div>
+          <div class="mb-3">
+            <span class="text-2xl font-black text-gray-800">₹499</span>
+            <span class="text-xs text-gray-500">/month</span>
+          </div>
+          <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4 flex-1">
+            <li><i class="fas fa-check text-green-500 mr-1"></i> <strong>Up to 10 employees</strong></li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> AI face scanner</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Reports & payroll</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Email support</li>
+          </ul>
+          <button onclick="buyPlan('monthly')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition active:scale-95">Choose Monthly</button>
         </div>
-        <div class="border-2 border-blue-500 rounded-2xl p-4 relative">
-          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[9px] font-bold px-3 py-1 rounded-full">BEST VALUE</span>
-          <h3 class="font-bold text-sm mb-1">Yearly</h3>
-          <div class="text-2xl font-black text-blue-600 mb-3">₹4,999<span class="text-xs text-gray-500">/yr</span></div>
-          <button onclick="buyPlan('yearly')" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-xs">Choose</button>
+
+        <!-- YEARLY -->
+        <div class="border-2 border-blue-500 rounded-2xl p-4 flex flex-col relative shadow-lg">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">Best Value</span>
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-800 text-sm">Yearly</h3>
+            <i class="fas fa-star text-yellow-500"></i>
+          </div>
+          <div class="mb-3">
+            <span class="text-2xl font-black text-blue-600">₹4,999</span>
+            <span class="text-xs text-gray-500">/year</span>
+            <p class="text-[10px] text-green-600 font-bold mt-0.5">Save ₹989 (2 months free)</p>
+          </div>
+          <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4 flex-1">
+            <li><i class="fas fa-check text-green-500 mr-1"></i> <strong>Up to 20 employees</strong></li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Everything in Monthly</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Priority support</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> WhatsApp support</li>
+          </ul>
+          <button onclick="buyPlan('yearly')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition active:scale-95">Choose Yearly</button>
         </div>
-        <div class="border-2 border-gray-200 rounded-2xl p-4">
-          <h3 class="font-bold text-sm mb-1">Enterprise</h3>
-          <div class="text-2xl font-black mb-3">Custom</div>
-          <button onclick="contactEnterprise()" class="w-full bg-purple-600 text-white py-2 rounded-lg font-bold text-xs">Contact</button>
+
+        <!-- ENTERPRISE -->
+        <div class="border-2 border-gray-200 rounded-2xl p-4 flex flex-col hover:border-purple-400 transition">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-gray-800 text-sm">Enterprise</h3>
+            <i class="fas fa-building text-purple-500"></i>
+          </div>
+          <div class="mb-3">
+            <span class="text-xl font-black text-gray-800">Custom</span>
+            <p class="text-[10px] text-gray-500 mt-0.5">Volume-based pricing</p>
+          </div>
+          <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4 flex-1">
+            <li><i class="fas fa-check text-green-500 mr-1"></i> <strong>Unlimited employees</strong></li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Multi-branch support</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Custom integrations</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Dedicated manager</li>
+          </ul>
+          <button onclick="contactEnterprise()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-bold text-xs transition active:scale-95">Contact Sales</button>
         </div>
       </div>
-      <button onclick="toggleModal('subscriptionModal')" class="w-full bg-gray-200 py-2 rounded font-bold text-sm">Close</button>
+
+      <div class="border-t border-gray-200 pt-4 text-center">
+        <p class="text-[11px] text-gray-500 mb-2 font-semibold">Payments & questions — reach us at:</p>
+        <div class="flex flex-wrap justify-center gap-2 text-[11px]">
+          <a href="mailto:gsmmargao@gmail.com?subject=Attendance%20System%20Subscription%20Inquiry" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-semibold border border-blue-200 transition">
+            <i class="fas fa-envelope mr-1"></i> gsmmargao@gmail.com
+          </a>
+        </div>
+        <p class="text-[10px] text-gray-400 mt-3">After payment is confirmed, your plan activates within 24 hours.</p>
+        <button type="button" onclick="toggleModal('subscriptionModal')" class="mt-3 text-xs text-gray-500 hover:text-red-500 underline transition">Close</button>
+      </div>
+
     </div>
   </div>
 
@@ -658,7 +736,19 @@ async function buyPlan(plan) {
 }
 
 function contactEnterprise() {
-  window.open('https://wa.me/919999999999?text=Enterprise%20plan%20interest', '_blank');
+  const firm = currentAdmin?.firm_name || 'My Firm';
+  const email = currentAdmin?.email || '';
+  const subject = encodeURIComponent('Enterprise Plan Inquiry - ' + firm);
+  const body = encodeURIComponent(
+    'Hi,\n\n' +
+    'I am interested in the Enterprise plan for the Attendance System.\n\n' +
+    'Firm Name: ' + firm + '\n' +
+    'Admin ID: ' + email + '\n' +
+    'Current Employees: ' + (allEmployees?.length || 0) + '\n\n' +
+    'Please share pricing and details.\n\n' +
+    'Thanks.'
+  );
+  window.location.href = 'mailto:gsmmargao@gmail.com?subject=' + subject + '&body=' + body;
 }
 
 // ============== IDLE TIMER ==============
@@ -692,7 +782,7 @@ function switchTab(tabName) {
 }
 
 function switchReportSubTab(sub) {
-  ['daily','monthly'].forEach(s => {
+  ['daily','monthly','exports'].forEach(s => {
     document.getElementById(`report-view-${s}`).classList.add('hidden');
     document.getElementById(`subtab-btn-${s}`).className = "flex-1 py-3 text-gray-500";
   });
@@ -1251,14 +1341,26 @@ async function saveSalaryConfig() {
   alert('Saved');
 }
 
+function openPasswordModal() {
+  document.getElementById('newPass').value = '';
+  document.getElementById('confPass').value = '';
+  toggleModal('passwordModal');
+}
+
 async function changePassword() {
   const np = document.getElementById('newPass').value;
   const cp = document.getElementById('confPass').value;
+  if (!np || np.length < 4) return alert('Password must be at least 4 characters');
   if (np !== cp) return alert('Passwords do not match');
-  if (np.length < 4) return alert('Too short');
-  await api('/api/settings', { method: 'PATCH', body: { password: np } });
-  alert('Password updated');
-  toggleModal('passwordModal');
+  try {
+    await api('/api/settings', { method: 'PATCH', body: { password: np } });
+    alert('Password updated successfully!');
+    toggleModal('passwordModal');
+    document.getElementById('newPass').value = '';
+    document.getElementById('confPass').value = '';
+  } catch (e) {
+    alert('Failed to update password: ' + e.message);
+  }
 }
 
 // ============== LEAVE ==============
@@ -1342,6 +1444,112 @@ async function bulkApproveOt() {
   alert('Bulk OT approval requires a dedicated endpoint. Feature available in next update.');
   toggleModal('bulkModal');
 }
+
+// ============== QUICK EXPORTS ==============
+async function exportCSVDaily() {
+  const date = document.getElementById('dailyReportDate').value || currentDashboardDate;
+  try {
+    const r = await api('/api/reports/daily?date=' + date);
+    let csv = 'Date,Name,Code,Department,Status,Total Hours,OT Hours,Daily Base,OT Pay,Est Daily Pay\n';
+    (r.rows || []).forEach(row => {
+      csv += `"${date}","${row.name}","${row.code || '-'}","${row.department || 'General'}","${row.status}",${row.totalHours.toFixed(2)},${row.ot.toFixed(2)},${row.dailyBase.toFixed(2)},${row.otPay.toFixed(2)},${row.estDailyPay.toFixed(2)}\n`;
+    });
+    downloadCSV(csv, `Daily_Attendance_${date}.csv`);
+  } catch (e) { alert('Export failed: ' + e.message); }
+}
+
+async function exportCSVMonthly() {
+  const month = document.getElementById('monthlyReportPicker').value;
+  if (!month) return alert('Please select a month in the Monthly tab first');
+  try {
+    const r = await api('/api/reports/monthly?month=' + month);
+    let csv = 'Month,Name,Code,Department,Present,Absent,Late,Total Hours,OT Hours,Base Pay,OT Pay,Gross\n';
+    (r.rows || []).forEach(row => {
+      csv += `"${month}","${row.name}","${row.code || '-'}","${row.department || 'General'}",${row.presents},${row.absents},${row.lates},${row.totalHours.toFixed(2)},${row.otHours.toFixed(2)},${row.basePay.toFixed(2)},${row.otPay.toFixed(2)},${row.gross.toFixed(2)}\n`;
+    });
+    downloadCSV(csv, `Monthly_Payroll_${month}.csv`);
+  } catch (e) { alert('Export failed: ' + e.message); }
+}
+
+function openEmployeeReportModal() {
+  const opts = allEmployees.map(e => `<option value="${e.id}">${e.name} (${e.emp_code || 'EMP'})</option>`).join('');
+  const month = document.getElementById('monthlyReportPicker').value || currentDashboardDate.substring(0,7);
+
+  const modal = document.createElement('div');
+  modal.id = 'empReportModal';
+  modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[80] flex items-center justify-center p-4';
+  modal.innerHTML = `
+    <div class="bg-white rounded-xl p-5 w-full max-w-sm">
+      <h3 class="font-bold mb-3"><i class="fas fa-user-clock text-blue-500"></i> Individual Employee Report</h3>
+      <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Employee</label>
+      <select id="empReportSelect" class="w-full p-2 border rounded-lg text-sm bg-gray-50 mb-3">
+        <option value="">-- Select --</option>
+        ${opts}
+      </select>
+      <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Month</label>
+      <input type="month" id="empReportMonth" value="${month}" class="w-full p-2 border rounded-lg text-sm bg-gray-50 mb-4">
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('empReportModal').remove()" class="flex-1 bg-gray-200 py-2 rounded font-bold text-sm">Cancel</button>
+        <button onclick="generateEmployeeReport()" class="flex-1 bg-blue-600 text-white py-2 rounded font-bold text-sm">Download CSV</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function generateEmployeeReport() {
+  const empId = document.getElementById('empReportSelect').value;
+  const month = document.getElementById('empReportMonth').value;
+  if (!empId) return alert('Select an employee');
+  if (!month) return alert('Select a month');
+
+  const emp = allEmployees.find(e => e.id === empId);
+  if (!emp) return alert('Employee not found');
+
+  try {
+    // Get all monthly report data, then filter for this employee
+    const r = await api('/api/reports/monthly?month=' + month);
+    const row = (r.rows || []).find(x => x.employee_id === empId);
+    if (!row) return alert('No data for this employee in ' + month);
+
+    const standardHours = currentAdmin.standard_hours || 8;
+    const [y, m] = month.split('-').map(Number);
+    const daysInMonth = new Date(y, m, 0).getDate();
+
+    // Get day-wise records for this employee
+    const dailyR = await api('/api/reports/daily?date=' + month + '-01');
+    // We don't have a per-employee endpoint, so we compose from available data
+    let csv = `Employee Report: ${emp.name} (${emp.emp_code || 'N/A'})\nMonth: ${month}\n\n`;
+    csv += 'Summary\n';
+    csv += `Present Days,${row.presents}\n`;
+    csv += `Absent Days,${row.absents}\n`;
+    csv += `Late Days,${row.lates}\n`;
+    csv += `Total Hours,${row.totalHours.toFixed(2)}\n`;
+    csv += `OT Hours,${row.otHours.toFixed(2)}\n`;
+    csv += `Base Pay,${row.basePay.toFixed(2)}\n`;
+    csv += `OT Pay,${row.otPay.toFixed(2)}\n`;
+    csv += `Gross,${row.gross.toFixed(2)}\n`;
+
+    downloadCSV(csv, `Employee_${emp.name.replace(/\s+/g,'_')}_${month}.csv`);
+    document.getElementById('empReportModal').remove();
+  } catch (e) {
+    alert('Export failed: ' + e.message);
+  }
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============== END QUICK EXPORTS ==============
+
 </script>
 </body>
 </html>
