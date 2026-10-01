@@ -18,12 +18,22 @@ export default api(async (req, res) => {
 
   if (error || !admin) return res.status(401).json({ error: 'Invalid Admin ID or Password' });
 
+  // Email must be verified (unless it's the seed admin style with no real email)
+  const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(admin.email);
+  if (looksLikeEmail && !admin.email_verified) {
+    return res.status(403).json({
+      error: 'Please verify your email first. Check your inbox or request a new code.',
+      code: 'EMAIL_NOT_VERIFIED',
+      email: admin.email
+    });
+  }
+
   setSessionCookie(res, { role: 'admin', id: admin.id, email: admin.email });
 
   await supabase.from('audit_logs').insert([{
     admin_id: admin.id,
     action: 'Admin Login',
-    details: { email }
+    details: { email: admin.email }
   }]).then(() => {}).catch(() => {});
 
   const sub = evaluateAdminSubscription(admin);

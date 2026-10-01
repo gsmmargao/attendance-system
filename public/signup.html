@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Sign Up — Attendance System</title>
+<link rel="icon" href="data:,">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  .spin { animation: spin-slow 1s linear infinite; }
+</style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-[100dvh] p-4">
+
+<div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+  <!-- STEP 1: SIGNUP FORM -->
+  <div id="step1" class="p-8">
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-blue-600 flex items-center justify-center text-white text-2xl shadow-lg mb-3">
+        <i class="fas fa-fingerprint"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800">Create Your Account</h1>
+      <p class="text-gray-500 text-sm mt-1">Start your 7-day free trial</p>
+    </div>
+
+    <form onsubmit="event.preventDefault(); submitSignup();" class="space-y-3">
+      <div>
+        <label class="text-[11px] font-bold text-gray-500 uppercase block mb-1">Firm Name</label>
+        <input id="firm_name" placeholder="e.g. GSM Solutions" class="w-full p-3 border rounded-xl text-sm bg-gray-50 outline-none focus:bg-white focus:border-blue-500" required>
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-gray-500 uppercase block mb-1">Email</label>
+        <input type="email" id="email" placeholder="you@company.com" class="w-full p-3 border rounded-xl text-sm bg-gray-50 outline-none focus:bg-white focus:border-blue-500" required>
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-gray-500 uppercase block mb-1">Password</label>
+        <input type="password" id="password" placeholder="At least 6 characters" class="w-full p-3 border rounded-xl text-sm bg-gray-50 outline-none focus:bg-white focus:border-blue-500" required minlength="6">
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-gray-500 uppercase block mb-1">Employee Capacity</label>
+        <input type="number" id="employee_limit" value="10" min="1" class="w-full p-3 border rounded-xl text-sm bg-gray-50 outline-none focus:bg-white focus:border-blue-500" required>
+        <p class="text-[10px] text-gray-400 mt-1">You can increase this later</p>
+      </div>
+
+      <button type="submit" id="btnSignup" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3.5 rounded-xl font-bold shadow-lg active:scale-95 transition flex items-center justify-center gap-2 mt-2">
+        <span>Create Account</span>
+        <i class="fas fa-arrow-right text-xs"></i>
+      </button>
+    </form>
+
+    <p id="error1" class="text-red-500 text-xs text-center mt-3 hidden"></p>
+
+    <div class="mt-6 pt-5 border-t text-center">
+      <p class="text-xs text-gray-500">Already have an account?
+        <a href="/admin.html" class="text-blue-600 font-bold hover:underline">Log in</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 2: OTP VERIFICATION -->
+  <div id="step2" class="p-8 hidden">
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-600 flex items-center justify-center text-white text-2xl shadow-lg mb-3">
+        <i class="fas fa-envelope-open-text"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800">Check Your Email</h1>
+      <p class="text-gray-500 text-sm mt-1">We sent a 6-digit code to</p>
+      <p id="displayEmail" class="text-blue-600 font-bold text-sm mt-1">—</p>
+    </div>
+
+    <form onsubmit="event.preventDefault(); submitOtp();" class="space-y-4">
+      <div>
+        <label class="text-[11px] font-bold text-gray-500 uppercase block mb-2 text-center">Enter 6-digit Code</label>
+        <input id="otp_code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000"
+               class="w-full p-4 border-2 rounded-xl text-3xl text-center font-mono tracking-[0.4em] bg-gray-50 outline-none focus:bg-white focus:border-indigo-500 transition"
+               autocomplete="one-time-code" required>
+      </div>
+
+      <button type="submit" id="btnVerify" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3.5 rounded-xl font-bold shadow-lg active:scale-95 transition">
+        Verify & Continue
+      </button>
+    </form>
+
+    <p id="error2" class="text-red-500 text-xs text-center mt-3 hidden"></p>
+    <p id="success2" class="text-green-600 text-xs text-center mt-3 hidden"></p>
+
+    <div class="mt-5 pt-5 border-t text-center">
+      <p class="text-xs text-gray-500 mb-2">Didn't get the code?</p>
+      <button onclick="resendOtp()" id="btnResend" class="text-xs font-bold text-indigo-600 hover:underline disabled:text-gray-300 disabled:cursor-not-allowed disabled:no-underline">
+        <i class="fas fa-redo"></i> Resend code
+      </button>
+      <p class="text-[10px] text-gray-400 mt-3">
+        Wrong email? <a href="#" onclick="backToStep1(); return false;" class="underline">Go back</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 3: SUCCESS -->
+  <div id="step3" class="p-8 hidden text-center">
+    <div class="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center text-green-600 text-4xl mb-4">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">You're All Set!</h1>
+    <p class="text-gray-500 text-sm mb-6">Your email is verified. Redirecting to your dashboard...</p>
+    <div class="w-12 h-12 mx-auto border-4 border-gray-200 border-t-blue-600 rounded-full spin"></div>
+  </div>
+
+</div>
+
+<script>
+let signupEmail = '';
+
+async function api(path, body) {
+  const res = await fetch(path, {
+    credentials: 'include',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+async function submitSignup() {
+  const errEl = document.getElementById('error1');
+  const btn = document.getElementById('btnSignup');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+
+  const payload = {
+    firm_name: document.getElementById('firm_name').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value,
+    employee_limit: parseInt(document.getElementById('employee_limit').value) || 10
+  };
+
+  try {
+    const r = await api('/api/auth/signup', payload);
+    signupEmail = payload.email;
+    document.getElementById('displayEmail').innerText = payload.email;
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.remove('hidden');
+    document.getElementById('otp_code').focus();
+    startResendCooldown();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>Create Account</span><i class="fas fa-arrow-right text-xs"></i>';
+  }
+}
+
+async function submitOtp() {
+  const errEl = document.getElementById('error2');
+  const btn = document.getElementById('btnVerify');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+  const code = document.getElementById('otp_code').value.trim();
+
+  try {
+    await api('/api/auth/verify-otp', { email: signupEmail, otp_code: code });
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step3').classList.remove('hidden');
+    setTimeout(() => { window.location.href = '/admin.html'; }, 1500);
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Verify & Continue';
+  }
+}
+
+let resendTimer = null;
+function startResendCooldown() {
+  const btn = document.getElementById('btnResend');
+  btn.disabled = true;
+  let seconds = 60;
+  btn.innerHTML = `<i class="fas fa-clock"></i> Wait ${seconds}s`;
+  clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    seconds--;
+    if (seconds <= 0) {
+      clearInterval(resendTimer);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-redo"></i> Resend code';
+    } else {
+      btn.innerHTML = `<i class="fas fa-clock"></i> Wait ${seconds}s`;
+    }
+  }, 1000);
+}
+
+async function resendOtp() {
+  const errEl = document.getElementById('error2');
+  const sucEl = document.getElementById('success2');
+  errEl.classList.add('hidden');
+  sucEl.classList.add('hidden');
+
+  try {
+    await api('/api/auth/resend-otp', { email: signupEmail });
+    sucEl.textContent = 'New code sent! Check your inbox.';
+    sucEl.classList.remove('hidden');
+    startResendCooldown();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+function backToStep1() {
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step1').classList.remove('hidden');
+  clearInterval(resendTimer);
+}
+</script>
+</body>
+</html>

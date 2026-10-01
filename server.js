@@ -20,6 +20,9 @@ const routes = {
   'post /api/auth/superadmin-login':   () => import('./api/auth/superadmin-login.js'),
   'post /api/auth/superadmin-logout':  () => import('./api/auth/superadmin-logout.js'),
   'get /api/auth/me':                  () => import('./api/auth/me.js'),
+  'post /api/auth/signup':             () => import('./api/auth/signup.js'),
+  'post /api/auth/verify-otp':         () => import('./api/auth/verify-otp.js'),
+  'post /api/auth/resend-otp':         () => import('./api/auth/resend-otp.js'),
 
   // Employees
   'get /api/employees':                () => import('./api/employees/index.js'),
@@ -69,10 +72,7 @@ for (const [key, loader] of Object.entries(routes)) {
   const [method, routePath] = key.split(' ');
   app[method](routePath, async (req, res) => {
     try {
-      // Bridge Express URL params into req.query so handlers can read req.query.id
-      for (const [k, v] of Object.entries(req.params || {})) {
-        req.query[k] = v;
-      }
+      for (const [k, v] of Object.entries(req.params || {})) req.query[k] = v;
       const mod = await loader();
       await mod.default(req, res);
     } catch (err) {
