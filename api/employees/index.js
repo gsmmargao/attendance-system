@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase.js';
 import { api } from '../../lib/auth.js';
 import { getSessionFromRequest } from '../../lib/session.js';
+import { hashPassword } from '../../lib/password.js';
 
 export default api(async (req, res) => {
   const session = getSessionFromRequest(req);
@@ -53,6 +54,9 @@ export default api(async (req, res) => {
       });
     }
 
+    if (payload.password) {
+      payload.password = await hashPassword(payload.password);
+    }
     const { data, error } = await supabase
       .from('employees')
       .insert([{ ...payload, admin_id: session.id }])

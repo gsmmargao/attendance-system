@@ -53,16 +53,29 @@
         }
       }
     }
-    /* Full-screen pages (index, signup) */
-    @supports (padding-top: env(safe-area-inset-top)) {
-      @media (max-width: 1023px) {
-        body {
-          padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
-          padding-left: env(safe-area-inset-left);
-          padding-right: env(safe-area-inset-right);
-          box-sizing: border-box;
-        }
+
+
+    /* ===== Full-screen on mobile (fix grey bars) ===== */
+    @media (max-width: 1023px) {
+      body {
+        display: block !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        min-height: 100dvh !important;
+        overflow: hidden !important;
+      }
+      #appContainer {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        box-sizing: border-box;
       }
     }
 </style>

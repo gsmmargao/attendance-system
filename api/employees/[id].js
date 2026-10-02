@@ -1,6 +1,7 @@
 import { supabase } from '../../lib/supabase.js';
 import { api } from '../../lib/auth.js';
 import { getSessionFromRequest } from '../../lib/session.js';
+import { hashPassword, isHashed } from '../../lib/password.js';
 
 export default api(async (req, res) => {
   const session = getSessionFromRequest(req);
@@ -43,9 +44,13 @@ export default api(async (req, res) => {
 
   // -------- UPDATE --------
   if (req.method === 'PATCH') {
+    const update = { ...(req.body || {}) };
+    if (update.password && !isHashed(update.password)) {
+      update.password = await hashPassword(update.password);
+    }
     const { data, error } = await supabase
       .from('employees')
-      .update(req.body || {})
+      .update(update)
       .eq('id', id)
       .eq('admin_id', session.id)
       .select()

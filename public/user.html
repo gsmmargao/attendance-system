@@ -40,7 +40,28 @@
         }
       }
     }
-    </style>
+    
+    /* ===== Full-screen on mobile ===== */
+    @media (max-width: 1023px) {
+      body {
+        display: block !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        min-height: 100dvh !important;
+        overflow: hidden !important;
+      }
+      body > div {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 100dvh !important;
+        box-shadow: none !important;
+      }
+      #appView {
+        padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
+      }
+    }
+</style>
 </head>
 <body class="bg-gray-100 flex justify-center min-h-screen select-none">
 <div class="w-full max-w-md bg-white min-h-screen shadow-lg flex flex-col relative overflow-hidden">

@@ -2,6 +2,7 @@ import { supabase } from '../../lib/supabase.js';
 import { setSessionCookie } from '../../lib/session.js';
 import { api } from '../../lib/auth.js';
 import { evaluateAdminSubscription } from '../../lib/subscription.js';
+import { verifyPassword, isHashed, hashPassword } from '../../lib/password.js';
 
 export default api(async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -13,14 +14,21 @@ export default api(async (req, res) => {
     .from('admins')
     .select('*')
     .eq('email', email)
-    .eq('password', password)
     .maybeSingle();
 
   if (error || !admin) return res.status(401).json({ error: 'Invalid Admin ID or Password' });
 
-  // Email must be verified (unless it's the seed admin style with no real email)
+  const ok = await verifyPassword(password, admin.password);
+  if (!ok) return res.status(401).json({ error: 'Invalid Admin ID or Password' });
+
+  // Auto-migrate plaintext → hashed
+  if (!isHashed(admin.password)) {
+    const newHash = await hashPassword(password);
+    await supabase.from('admins').update({ password: newHash }).eq('id', admin.id);
+  }
+
   const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(admin.email);
-  if (looksLikeEmail && !admin.email_verified) {
+  if (looksLikeEmail && admin.email_verified === false) {
     return res.status(403).json({
       error: 'Please verify your email first. Check your inbox or request a new code.',
       code: 'EMAIL_NOT_VERIFIED',
