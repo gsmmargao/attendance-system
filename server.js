@@ -61,6 +61,15 @@ const routes = {
   'post /api/subscription/verify':        () => import('./api/subscription/verify.js'),
   'get /api/subscription/expire-check':   () => import('./api/subscription/expire-check.js'),
 
+  // Billing
+  'get /api/subscription/billing-status':   () => import('./api/subscription/billing-status.js'),
+  'post /api/subscription/setup-order':     () => import('./api/subscription/setup-order.js'),
+  'post /api/subscription/monthly-order':   () => import('./api/subscription/monthly-order.js'),
+  'post /api/subscription/verify-setup':    () => import('./api/subscription/verify-setup.js'),
+  'post /api/subscription/verify-monthly':  () => import('./api/subscription/verify-monthly.js'),
+  'get /api/subscription/generate-bill':    () => import('./api/subscription/generate-bill.js'),
+  'get /api/subscription/enforce-overdue':  () => import('./api/subscription/enforce-overdue.js'),
+
   // Superadmin
   'get /api/superadmin/firms':            () => import('./api/superadmin/firms.js'),
   'post /api/superadmin/firms':           () => import('./api/superadmin/firms.js'),

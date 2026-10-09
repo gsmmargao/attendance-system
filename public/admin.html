@@ -518,50 +518,28 @@
 
       <div class="text-center mb-5">
         <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl mx-auto mb-3 shadow-lg"><i class="fas fa-crown"></i></div>
-        <h2 id="subModalTitle" class="text-xl lg:text-2xl font-bold text-gray-800">Choose Your Plan</h2>
-        <p id="subModalSubtitle" class="text-xs lg:text-sm text-gray-500 mt-1">Your free trial has ended. Continue with a plan below.</p>
+        <h2 id="subModalTitle" class="text-xl lg:text-2xl font-bold text-gray-800">Complete Your Setup</h2>
+        <p id="subModalSubtitle" class="text-xs lg:text-sm text-gray-500 mt-1">Pay once to activate your account.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 mb-5">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
 
-        <!-- MONTHLY -->
-        <div class="border-2 border-gray-200 rounded-2xl p-4 flex flex-col hover:border-blue-400 transition">
-          <div class="flex items-center justify-between mb-1">
-            <h3 class="font-bold text-gray-800 text-sm">Monthly</h3>
-            <i class="fas fa-calendar-alt text-blue-500"></i>
-          </div>
+        <!-- SETUP FEE (one-time) -->
+        <div class="border-2 border-blue-500 rounded-2xl p-4 relative shadow-lg md:col-span-2">
+          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">One-Time Setup</span>
+          <h3 class="font-bold text-gray-800 text-sm mb-3 mt-2">Account Setup Fee</h3>
           <div class="mb-3">
-            <span class="text-2xl font-black text-gray-800">₹499</span>
-            <span class="text-xs text-gray-500">/month</span>
+            <span class="text-3xl font-black text-blue-600">₹2,360</span>
+            <p class="text-[10px] text-gray-500 mt-1">₹2,000 + 18% GST (₹360)</p>
           </div>
-          <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4 flex-1">
-            <li><i class="fas fa-check text-green-500 mr-1"></i> <strong>Up to 10 employees</strong></li>
-            <li><i class="fas fa-check text-green-500 mr-1"></i> AI face scanner</li>
+          <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4">
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Full dashboard access</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> AI face scanner + kiosk</li>
             <li><i class="fas fa-check text-green-500 mr-1"></i> Reports & payroll</li>
-            <li><i class="fas fa-check text-green-500 mr-1"></i> Email support</li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Unlimited features</li>
           </ul>
-          <button onclick="buyPlan('monthly')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition active:scale-95">Choose Monthly</button>
-        </div>
-
-        <!-- YEARLY -->
-        <div class="border-2 border-blue-500 rounded-2xl p-4 flex flex-col relative shadow-lg">
-          <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-500 text-white text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">Best Value</span>
-          <div class="flex items-center justify-between mb-1">
-            <h3 class="font-bold text-gray-800 text-sm">Yearly</h3>
-            <i class="fas fa-star text-yellow-500"></i>
-          </div>
-          <div class="mb-3">
-            <span class="text-2xl font-black text-blue-600">₹4,999</span>
-            <span class="text-xs text-gray-500">/year</span>
-            <p class="text-[10px] text-green-600 font-bold mt-0.5">Save ₹989 (2 months free)</p>
-          </div>
-          <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4 flex-1">
-            <li><i class="fas fa-check text-green-500 mr-1"></i> <strong>Up to 20 employees</strong></li>
-            <li><i class="fas fa-check text-green-500 mr-1"></i> Everything in Monthly</li>
-            <li><i class="fas fa-check text-green-500 mr-1"></i> Priority support</li>
-            <li><i class="fas fa-check text-green-500 mr-1"></i> WhatsApp support</li>
-          </ul>
-          <button onclick="buyPlan('yearly')" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition active:scale-95">Choose Yearly</button>
+          <p class="text-[10px] text-gray-500 mb-3 bg-gray-50 p-2 rounded">After setup, monthly billing is <strong>₹59/employee</strong> (₹50 + 18% GST), billed at month-end.</p>
+          <button onclick="paySetup()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-sm transition active:scale-95">Pay ₹2,360 & Activate</button>
         </div>
 
         <!-- ENTERPRISE -->
@@ -575,24 +553,20 @@
             <p class="text-[10px] text-gray-500 mt-0.5">Volume-based pricing</p>
           </div>
           <ul class="text-[11px] text-gray-600 space-y-1.5 mb-4 flex-1">
-            <li><i class="fas fa-check text-green-500 mr-1"></i> <strong>Unlimited employees</strong></li>
+            <li><i class="fas fa-check text-green-500 mr-1"></i> Custom setup</li>
             <li><i class="fas fa-check text-green-500 mr-1"></i> Multi-branch support</li>
             <li><i class="fas fa-check text-green-500 mr-1"></i> Custom integrations</li>
-            <li><i class="fas fa-check text-green-500 mr-1"></i> Dedicated manager</li>
           </ul>
           <button onclick="contactEnterprise()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-bold text-xs transition active:scale-95">Contact Sales</button>
         </div>
       </div>
 
       <div class="border-t border-gray-200 pt-4 text-center">
-        <p class="text-[11px] text-gray-500 mb-2 font-semibold">Payments & questions — reach us at:</p>
-        <div class="flex flex-wrap justify-center gap-2 text-[11px]">
-          <a href="mailto:gsmmargao@gmail.com?subject=Attendance%20System%20Subscription%20Inquiry" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-semibold border border-blue-200 transition">
-            <i class="fas fa-envelope mr-1"></i> gsmmargao@gmail.com
-          </a>
-        </div>
-        <p class="text-[10px] text-gray-400 mt-3">After payment is confirmed, your plan activates within 24 hours.</p>
-        <button type="button" onclick="toggleModal('subscriptionModal')" class="mt-3 text-xs text-gray-500 hover:text-red-500 underline transition">Close</button>
+        <p class="text-[11px] text-gray-500 mb-2 font-semibold">Questions?</p>
+        <a href="mailto:gsmmargao@gmail.com?subject=Attendance%20System%20Setup" class="inline-block bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-semibold border border-blue-200 text-[11px]">
+          <i class="fas fa-envelope mr-1"></i> gsmmargao@gmail.com
+        </a>
+        <button type="button" onclick="logout()" class="mt-3 block mx-auto text-xs text-gray-500 hover:text-red-500 underline">Sign out</button>
       </div>
 
     </div>
@@ -674,8 +648,8 @@ function applyAdminDetails() {
   document.getElementById('leaveDateInput').value = currentDashboardDate;
   document.getElementById('newHolidayDate').value = currentDashboardDate;
 
-  // Subscription gate
-  evaluateSubscription();
+  // Billing gate
+  refreshBilling();
   startIdleTimer();
   loadDashboard();
 }
